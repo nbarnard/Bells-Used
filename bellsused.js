@@ -26,9 +26,11 @@ var g_pitch = []; // Pitch array
 var g_form; // Dialog
 
 // A blank function, since we don't need to run when MuseScore loads or closes, only when we're called.
+
 function GNDN() {}
 
 // Display Dialog
+
 function DispDialog() {
 	if (typeof curScore === 'undefined') {
 		QMessageBox.critical(g_form, "Feedback", "Please Open a Score from which to Create a Bells Used Display.");
@@ -43,6 +45,7 @@ function DispDialog() {
 }
 
 // Process the Form
+
 function ProcessForm() {
 
 	PopulatePitches();
@@ -56,6 +59,7 @@ function ProcessForm() {
 
 
 // Goes through the whole score Chord by Chord and populates the notes used into Pitch Array.
+
 function PopulatePitches() {
 	var idx, cursor, staff, voice, i, note, pitch, tone, chord, n;
 
@@ -108,6 +112,7 @@ function PopulatePitches() {
 	}
 
 	// Create a Blank Pitch Object
+
 	function BlankPitch() {
 		var blank = {};
 
@@ -121,6 +126,7 @@ function PopulatePitches() {
 
 // Generates Text Based BUCs
 //
+
 function TextBUC() {
 
 	var idx, unit, fName, file, textStream, octave, x, minPitch, maxPitch, maxOctave = 0,
@@ -252,6 +258,7 @@ function TextBUC() {
 
 	// Sorts enharmonics from most preferred to least preferred.
 	// We prefer a natural to any accidental, and a single accidental to a double accidental.
+
 	function sortenharmonics(a, b) {
 		// Primary representation of notes are between 13 and 24. If a or b is in that range it should be first.
 		if ((a >= 13) && (a <= 24)) {
@@ -275,6 +282,7 @@ function TextBUC() {
 		return 0;
 	}
 	// Return the note name
+
 	function NoteName(pitch, enharmonic) {
 		var notes = ["C", "G", "D", "A", "E", "B", "F"],
 			accidental, accsymbols = ["bb", "b", "#", "##"];
@@ -298,6 +306,7 @@ function TextBUC() {
 	}
 
 	// Given a pitch, return what octave it is in.
+
 	function findOctave(pitch) {
 		// Find the proper octave and return it. Despite this looking odd a case/switch wouldn't work here
 		// And thanks to Ben its so much cleaner than a series of If/Else statements
@@ -305,6 +314,7 @@ function TextBUC() {
 		return pitch < 12 ? 0 : pitch < 24 ? 1 : pitch < 36 ? 2 : pitch < 48 ? 3 : pitch < 60 ? 4 : pitch < 72 ? 5 : pitch < 84 ? 6 : pitch < 96 ? 7 : pitch < 108 ? 8 : pitch < 120 ? 9 : 10;
 	}
 	// Start the output. 
+
 	function startOutput() {
 
 		if (!oClipboard) {
@@ -338,6 +348,7 @@ function TextBUC() {
 	}
 
 	// Add to our output
+
 	function writeOutput(buf) {
 		if (!oClipboard) {
 			textStream.writeString(buf);
@@ -346,6 +357,7 @@ function TextBUC() {
 		}
 	}
 	// Close our output.
+
 	function endOutput() {
 		if (!oClipboard) {
 			file.close();
@@ -395,18 +407,18 @@ function ScoreBUC() {
 	// add the bass clef notes
 	for (idx = 0; idx <= 61; idx++) {
 		// Process the pitch, and if we added a pitch set the last note value
-		if(ProcessPitch(idx)){
-		lastpitch=idx;
+		if (ProcessPitch(idx)) {
+			lastpitch = idx;
 		}
 	}
-    
-    // If bass is smaller add a hidden padding note.
-	
-    if (basslen<treblelen) {
-    	AddEndNote();
-    }
-        
-     
+
+	// If bass is smaller add a hidden padding note.
+
+	if (basslen < treblelen) {
+		AddEndNote();
+	}
+
+
 	// Treble Clef
 	cursor.staff = 0;
 	cursor.voice = 0;
@@ -415,18 +427,18 @@ function ScoreBUC() {
 	// add the treble clef notes
 	for (idx = 62; idx <= 126; idx++) {
 		// Process the pitch, and if we added a pitch set the last note value
-		if(ProcessPitch(idx)){
-			lastpitch=idx;
+		if (ProcessPitch(idx)) {
+			lastpitch = idx;
 		}
 	}
-	
-	// If treble is smaller add a hidden padding note.
-		
-	if (treblelen<basslen) {
-    	AddEndNote();    
-    }
 
-    
+	// If treble is smaller add a hidden padding note.
+
+	if (treblelen < basslen) {
+		AddEndNote();
+	}
+
+
 	return;
 
 
@@ -440,61 +452,64 @@ function ScoreBUC() {
 
 		// Sort the enharmonics from greatest to least
 		// Which is the pitch represented as the representation of the lowest note first.
-		g_pitch[pitch].enharmonic.sort(function (a, b) {return b - a});
+		g_pitch[pitch].enharmonic.sort(function (a, b) {
+			return b - a
+		});
 
-		for (x = 0; x < g_pitch[pitch].enharmonic.length; x++){
-		// x=function (x){x++; cursor.next(); return x}) {
+		for (x = 0; x < g_pitch[pitch].enharmonic.length; x++) {
+			// x=function (x){x++; cursor.next(); return x}) {
 			// Create the Chord Length
 			chord = new Chord();
-			chord.tickLen = 480; 
-			
+			chord.tickLen = 480;
+
 			// Add the pitch to the Chord.
 			note = new Note();
 			note.pitch = pitch;
 			note.tpc = g_pitch[pitch].enharmonic[x];
-			
-		// If this isn't the primary representation of a note and we have two representations of it
-		// print it as an "x". Admittedly this fails in an edge case where we have two non-primary representations 
-		// of notes, but a composer writing Double Flats and Double Sharps for bells can either write their own bells used
-		// or ask me to fix this.
-		
-		    if(((note.tpc<13)||(note.tpc>24))&&(g_pitch[pitch].enharmonic.length!==1)){
-				note.noteHead=1;
+
+			// If this isn't the primary representation of a note and we have two representations of it
+			// print it as an "x". Admittedly this fails in an edge case where we have two non-primary representations 
+			// of notes, but a composer writing Double Flats and Double Sharps for bells can either write their own bells used
+			// or ask me to fix this.
+
+			if (((note.tpc < 13) || (note.tpc > 24)) && (g_pitch[pitch].enharmonic.length !== 1)) {
+				note.noteHead = 1;
 			}
 			chord.addNote(note);
 			cursor.add(chord);
 
 			chord = cursor.chord();
-    		chord.noStem = true;
-			
+			chord.noStem = true;
+
 			cursor.next();
-			
+
 		}
-    return true;
+		return true;
 
 	}
-	
-	function AddEndNote(){
-	chord = new Chord();
-	// Figure out the length of the hidden note.
-    chord.tickLen = Math.abs(basslen - treblelen) * 480;
 
-    note = new Note();
-	note.pitch = lastpitch;
-    note.visible = false;
+	function AddEndNote() {
+		chord = new Chord();
+		// Figure out the length of the hidden note.
+		chord.tickLen = Math.abs(basslen - treblelen) * 480;
 
-    chord.addNote(note);
-    cursor.add(chord);
-	
+		note = new Note();
+		note.pitch = lastpitch;
+		note.visible = false;
+
+		chord.addNote(note);
+		cursor.add(chord);
+
 	}
 
 	function NotesInRange(begin, end) {
-		var usedpitches = 0, x;
+		var usedpitches = 0,
+			x;
 
 		// Work through the range and add up the number of individual notes we have to display.
 		for (x = begin; x <= end; x++) {
 			if (g_pitch[x].used === 1) {
-				usedpitches=usedpitches + g_pitch[x].enharmonic.length;
+				usedpitches = usedpitches + g_pitch[x].enharmonic.length;
 			}
 		}
 		return usedpitches;
@@ -505,24 +520,26 @@ function ScoreBUC() {
 // Find the first or last note used. 
 // x = 1 if we're starting at 0 going to 127.
 // x = -1 if we're starting at 127 going to 0.
-	function findEnd(direction) {
-		var x;
 
-		if (direction === 1) {
-			x = 0;
-		} else {
-			x = 126;
-		}
+function findEnd(direction) {
+	var x;
 
-		while (g_pitch[x].used === 0) {
-			x = x + direction;
-		}
-
-		// Wherever stopped is the end.
-		return x;
+	if (direction === 1) {
+		x = 0;
+	} else {
+		x = 126;
 	}
-	
+
+	while (g_pitch[x].used === 0) {
+		x = x + direction;
+	}
+
+	// Wherever stopped is the end.
+	return x;
+}
+
 // See if an array contains an object from http://stackoverflow.com/questions/237104/array-containsobj-in-javascript
+
 function contains(a, obj) {
 	var i;
 	for (i = 0; i < a.length; i++) {
