@@ -94,13 +94,13 @@ function PopulatePitches() {
 						tone = note.tpc;
 
 						// Check to see if the pitch is already used, if not add it.
-						if (g_pitch[pitch].used === 1) {
+						if (g_pitch[pitch].used) {
 							// Check to see if the enharmonic is already listed, if not add it.
 							if (!contains(g_pitch[pitch].enharmonic, tone)) {
 								g_pitch[pitch].enharmonic.push(tone);
 							}
 						} else {
-							g_pitch[pitch].used = 1;
+							g_pitch[pitch].used = true;
 							g_pitch[pitch].enharmonic[0] = tone;
 						}
 					}
@@ -116,7 +116,7 @@ function PopulatePitches() {
 	function BlankPitch() {
 		var blank = {};
 
-		blank.used = 0;
+		blank.used = false;
 		blank.enharmonic = [];
 
 		return blank;
@@ -199,8 +199,8 @@ function TextBUC() {
 	// Iterate through all the notes from the bottom to the top printing out the ones that are used.
 	for (idx = 0; idx < 127; idx++) {
 
-		// If used is 0 we didn't use that note. 
-		if (g_pitch[idx].used === 0) {
+		// Check if note is unused, if so process properly  
+		if (!g_pitch[idx].used) {
 			// Print an empty cell for CSV
 			if (!oText) {
 				writeOutput(",");
@@ -446,7 +446,7 @@ function ScoreBUC() {
 		var x;
 
 		// if the pitch isn't used do nothing.
-		if (g_pitch[pitch].used === 0) {
+		if (!g_pitch[pitch].used) {
 			return false;
 		}
 
@@ -467,14 +467,19 @@ function ScoreBUC() {
 			note.pitch = pitch;
 			note.tpc = g_pitch[pitch].enharmonic[x];
 
-			// If this isn't the primary representation of a note and we have two representations of it
-			// print it as an "x". Admittedly this fails in an edge case where we have two non-primary representations 
-			// of notes, but a composer writing Double Flats and Double Sharps for bells can either write their own bells used
-			// or ask me to fix this.
+			// Print the right notehead type if there is another enharmonic representing this pitch.
+			// If this is the most-primary representation of this enharmonic leave it as a normal notehead 
+			// Otherwise change the notehead type.
+			
+			// Check if this is not a Primary enharmonic and there is more than one enharmonic.
+			// If so, check if there are three enharmonics this categorically isn't the Primary representation.
+			// Or if this is in the Tertiary list (e.g. < 6 or > 29) it isn't the secondary representation.			
 
-			if (((note.tpc < 13) || (note.tpc > 24)) && (g_pitch[pitch].enharmonic.length !== 1)) {
-				note.noteHead = 1;
+			if (((note.tpc < 13 || note.tpc > 24) && g_pitch[pitch].enharmonic.length !== 1) && 
+			(g_pitch[pitch].enharmonic.length === 3 || note.tpc < 6 || note.tpc > 29)) {
+					note.noteHead = 1; 				
 			}
+			
 			chord.addNote(note);
 			cursor.add(chord);
 
@@ -493,13 +498,19 @@ function ScoreBUC() {
 		// Figure out the length of the hidden note.
 		chord.tickLen = Math.abs(basslen - treblelen) * 480;
 
+		// Make the note as the same pitch and enharmonic as the previous note.
 		note = new Note();
 		note.pitch = lastpitch;
 		note.visible = false;
-
+		
+		// The correct representation is the last enharmonic printed, which has been sorted into the last position.
+		note.tpc = g_pitch[lastpitch].enharmonic[g_pitch[lastpitch].enharmonic.length - 1];
+		
 		chord.addNote(note);
 		cursor.add(chord);
-
+		
+		chord = cursor.chord();
+		chord.noStem = true;
 	}
 
 	function NotesInRange(begin, end) {
@@ -508,7 +519,7 @@ function ScoreBUC() {
 
 		// Work through the range and add up the number of individual notes we have to display.
 		for (x = begin; x <= end; x++) {
-			if (g_pitch[x].used === 1) {
+			if (g_pitch[x].used) {
 				usedpitches = usedpitches + g_pitch[x].enharmonic.length;
 			}
 		}
@@ -530,7 +541,7 @@ function findEnd(direction) {
 		x = 126;
 	}
 
-	while (g_pitch[x].used === 0) {
+	while (!g_pitch[x].used) {
 		x = x + direction;
 	}
 
