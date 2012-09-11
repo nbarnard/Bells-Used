@@ -2,10 +2,10 @@
 //  MuseScore
 //
 //  Bells Used Plugin v 1.0  
-//  Derived from Mike Magatagan's Count Notes plugin
 //
-//  Copyright (C)2011 Mike Magatagan
 //  Copyright (C)2012 Nicholas Barnard
+//  Portions Copyright (C)2011 Mike Magatagan
+//  Derived from Mike Magatagan's Count Notes plugin
 //
 //  This program is free software; you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License version 2.
@@ -468,16 +468,12 @@ function ScoreBUC() {
 			note.tpc = g_pitch[pitch].enharmonic[x];
 
 			// Print the right notehead type if there is another enharmonic representing this pitch.
-			// If this is the most-primary representation of this enharmonic leave it as a normal notehead 
-			// Otherwise change the notehead type.
-			
-			// Check if this is not a Primary enharmonic and there is more than one enharmonic.
-			// If so, check if there are three enharmonics this categorically isn't the Primary representation.
-			// Or if this is in the Tertiary list (e.g. < 6 or > 29) it isn't the secondary representation.			
 
-			if (((note.tpc < 13 || note.tpc > 24) && g_pitch[pitch].enharmonic.length !== 1) && 
-			(g_pitch[pitch].enharmonic.length === 3 || note.tpc < 6 || note.tpc > 29)) {
-					note.noteHead = 1; 				
+			
+			// Print an X note head if this isn't the most primary representation of an enharmonic
+			
+			if (NotPrimary (note.tpc) && numEnharmonics !== 1 && (numEnharmonics === 3 || isTertiary(note.tpc))) {
+			 		note.noteHead = 1; 
 			}
 			
 			chord.addNote(note);
@@ -490,6 +486,16 @@ function ScoreBUC() {
 
 		}
 		return true;
+		
+		// Is tpc something other than primary?
+		function NotPrimary(tpc) {
+			return tpc < 13 || tpc > 24;
+		}
+		
+		// Is tpc tertiary? (or is it Ab which is secondary without a third representation of that tone.
+		function isTertiary(tpc) {
+			return tpc < 6 || tpc > 29 || tpc === 10;
+		}
 
 	}
 
