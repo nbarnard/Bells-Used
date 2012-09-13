@@ -23,7 +23,7 @@
 // This is ECMAScript code (ECMA-262 aka "Java Script")
 //
 var g_pitch = []; // Pitch array
-var g_form; // Dialog
+var g_dialog; // Global containing dialog
 
 // A blank function, since we don't need to run when MuseScore loads or closes, only when we're called.
 
@@ -31,28 +31,32 @@ function GNDN() {}
 
 // Display Dialog
 
-function DispDialog() {
-	if (typeof curScore === 'undefined') {
-		QMessageBox.critical(g_form, "Feedback", "Please Open a Score from which to Create a Bells Used Display.");
+function DisplayDialog() {
+	var loader, file;
+	
+	if (curScore === undefined) {
+		QMessageBox.critical(g_dialog, "Feedback", "Please Open or Select a Score from which to Create a Bells Used Display.");
 		return;
 	}
-	var loader = new QUiLoader(null);
-	var file = new QFile(pluginPath + "/bellsused.ui");
+	loader = new QUiLoader(null);
+	file = new QFile(pluginPath + "/bellsused.ui");
 	file.open(QIODevice.OpenMode(QIODevice.ReadOnly, QIODevice.Text));
-	form = loader.load(file, null);
-	form.buttonBox.accepted.connect(ProcessForm);
-	form.show();
+	g_dialog = loader.load(file, null);
+	g_dialog.buttonBox.accepted.connect(ProcessForm);
+	g_dialog.show();
 }
 
 // Process the Form
 
 function ProcessForm() {
 
+	// Gather the Used Pitches
 	PopulatePitches();
-	if (form.NewScore.checked) {
+	
+	if (g_dialog.NewScore.checked) {
 		ScoreBUC();
 	}
-	if (form.TextFile.checked || form.CSVFile.checked) {
+	if (g_dialog.TextFile.checked || g_dialog.CSVFile.checked) {
 		TextBUC();
 	}
 }
@@ -134,15 +138,8 @@ function TextBUC() {
 		NumAccidentalsUsed = 0,
 		title, composer, clipboardBuf, oClipboard, oText;
 
-	oClipboard = form.ToClipboard.checked;
-	oText = form.TextFile.checked;
-
-
-	// These are enharmonics that can only be expressed as a sharp or flat
-	var OnlyAccidental = [-1, 0, 8, 9, 10, 11, 12, 20, 21, 22, 23, 24, 32, 33];
-
-	// This the order of enharmonics e.g. 14=C, 21=C#, etc.
-	var EnharmonicOrder = [14, 21, 16, 23, 18, 13, 20, 15, 22, 17, 24, 19];
+	oClipboard = g_dialog.ToClipboard.checked;
+	oText = g_dialog.TextFile.checked;
 
 	// Set up some details for later
 	title = curScore.title;
@@ -152,9 +149,9 @@ function TextBUC() {
 		return;
 	}
 
-	minPitch = findEnd(1);
-	maxPitch = findEnd(-1);
-
+	minPitch = findLowPitch();
+	maxPitch = findHighPitch();
+	
 	// Write out the header for the piece. If we have the title and the composer output both. 
 	// If we have just the title output it. If we have neither. don't output any of it.
 	if (oText) {
@@ -167,12 +164,12 @@ function TextBUC() {
 		}
 		writeOutput(":\r\n");
 	} else {
-		if (form.IncludeHeader.checked) {
+		if (g_dialog.IncludeHeader.checked) {
 			// Write out all the header including all the notes in order
 			writeOutput("Title,Composer,Low Pitch,High Pitch,Octaves Used,");
 
 			for (x = 0; x < 127; x++) {
-				writeOutput(NoteName(x, EnharmonicOrder[x % 12]) + ",");
+				writeOutput(NoteName(x, PrimaryEnharmonicRep(x)) + ",");
 			}
 			writeOutput("\r\n");
 		}
@@ -218,7 +215,7 @@ function TextBUC() {
 		// cycle through the whole enharmonic array
 		for (x = 0; x < g_pitch[idx].enharmonic.length; x++) {
 			// If this enharmonic is contained within the enharmonic only array and this is our first time through increment the accidentals.
-			if ((contains(OnlyAccidental, g_pitch[idx].enharmonic[x])) && x === 0) {
+			if (OnlyAccidentalRep(g_pitch[idx].enharmonic[x]) && x === 0) {
 				NumAccidentalsUsed++;
 			}
 
@@ -255,6 +252,43 @@ function TextBUC() {
 	}
 
 	endOutput();
+	
+	// Return the highest pitch.
+	function findHighPitch(){
+		var x;
+		for(x=126; !g_pitch[x].used; x--);
+
+		// Wherever the for loop stopped is the end.
+		return x;		
+	}	
+
+	// Return the lowest pitch.
+	function findLowPitch(){
+		var x;
+		for(x=0; !g_pitch[x].used; x++);
+
+		// Wherever the for loop stopped is the end.
+		return x;	
+	}
+
+	
+	// Returns True if the primary representation of this note is an acidental 
+	
+	function OnlyAccidentalRep (enharmonic) {
+		// These are enharmonics that can only be expressed as a sharp or flat
+		var OnlyAccidental = [-1, 0, 8, 9, 10, 11, 12, 20, 21, 22, 23, 24, 32, 33];
+		
+		return contains(OnlyAccidental, enharmonic);
+	}
+	
+	// Returns the primary enharmonic given a pitch. 
+	// Primary Enharmonic is the Natural or Sharp representation of a note
+	function PrimaryEnharmonicRep(pitch) {
+		// This the order of enharmonics e.g. 14=C, 21=C#, etc.
+		var EnharmonicOrder = [14, 21, 16, 23, 18, 13, 20, 15, 22, 17, 24, 19];
+		
+		return EnharmonicOrder[pitch % 12];
+	}
 
 	// Sorts enharmonics from most preferred to least preferred.
 	// We prefer a natural to any accidental, and a single accidental to a double accidental.
@@ -320,9 +354,9 @@ function TextBUC() {
 		if (!oClipboard) {
 			// Open a file selection dlg
 			if (oText) {
-				fName = QFileDialog.getSaveFileName(g_form, "Select .txt file to create", "", "TXT file (*.txt)", 0);
+				fName = QFileDialog.getSaveFileName(g_dialog, "Select .txt file to create", "", "TXT file (*.txt)", 0);
 			} else {
-				fName = QFileDialog.getSaveFileName(g_form, "Select .csv file to create", "", "CSV file (*.csv)", 0);
+				fName = QFileDialog.getSaveFileName(g_dialog, "Select .csv file to create", "", "CSV file (*.csv)", 0);
 			}
 
 			if (fName === null || fName === "") {
@@ -335,7 +369,7 @@ function TextBUC() {
 				file.remove();
 			}
 			if (!file.open(QIODevice.ReadWrite)) {
-				QMessageBox.critical(g_form, "File Error", "Could not create output file " + fName);
+				QMessageBox.critical(g_dialog, "File Error", "Could not create output file " + fName);
 				return false;
 			}
 			textStream = new QTextStream(file);
@@ -363,7 +397,7 @@ function TextBUC() {
 			file.close();
 		} else {
 			QApplication.clipboard().setText(clipboardBuf, 0);
-			QMessageBox.information(g_form, "Complete", "Bells Used on Clipboard");
+			QMessageBox.information(g_dialog, "Complete", "Bells Used on Clipboard");
 		}
 		return;
 	}
@@ -371,28 +405,33 @@ function TextBUC() {
 
 
 function ScoreBUC() {
-	var title, composer, measurelen, idx, score, cursor, lastpitch, basslen, treblelen, chord, note;
+	var title, composer, measurelen, idx, score, cursor, lastnote, basslen, treblelen, chord, note;
 
 	// Set up some details for later
 	title = curScore.title;
 	composer = curScore.composer;
 
 	// Find the number of notes in each clef
-	// Middle C# (Midi Value 61) and lower in the Bass, Middle D (Midi Value 62) and higher in treble 
-	basslen = NotesInRange(0, 61);
-	treblelen = NotesInRange(62, 126);
+	basslen = NotesInBass();
+	treblelen = NotesInTreble();
 
-	// Assign measure len to the larger between the notes in the Bass or treble clef.
+	// Assign measure length to the larger between the notes in the Bass or treble clef.
 	measurelen = Math.max(basslen, treblelen);
+
+	// The last note written is a Note object. MuseScore sets lastnote.pitch = 0 here.
+	lastnote = new Note();
 
 	// Create the Score	
 	score = new Score();
 	score.title = title + " - Bells Used";
 	score.composer = composer;
+
 	// Make a measure of the appropriate length, so there are no barlines in the BUC.
 	score.timesig = new TimeSig(measurelen, 4);
+
 	// Be explicit: we want C Major/A Minor (0 flats/sharps) in key sig.
 	score.keysig = 0;
+
 	// create two staff piano part, sadly the format for bells isn't what we'd like
 	score.appendPart("Piano");
 	score.appendMeasures(1);
@@ -408,7 +447,8 @@ function ScoreBUC() {
 	for (idx = 0; idx <= 61; idx++) {
 		// Process the pitch, and if we added a pitch set the last note value
 		if (ProcessPitch(idx)) {
-			lastpitch = idx;
+			lastnote.pitch = idx;
+			lastnote.tpc = lastTPC(idx);
 		}
 	}
 
@@ -428,7 +468,8 @@ function ScoreBUC() {
 	for (idx = 62; idx <= 126; idx++) {
 		// Process the pitch, and if we added a pitch set the last note value
 		if (ProcessPitch(idx)) {
-			lastpitch = idx;
+			lastnote.pitch = idx;
+			lastnote.tpc = lastTPC(idx);
 		}
 	}
 
@@ -443,7 +484,9 @@ function ScoreBUC() {
 
 
 	function ProcessPitch(pitch) {
-		var x;
+		var x, numEnharmonics;
+
+		numEnharmonics = g_pitch[pitch].enharmonic.length;
 
 		// if the pitch isn't used do nothing.
 		if (!g_pitch[pitch].used) {
@@ -456,8 +499,7 @@ function ScoreBUC() {
 			return b - a
 		});
 
-		for (x = 0; x < g_pitch[pitch].enharmonic.length; x++) {
-			// x=function (x){x++; cursor.next(); return x}) {
+		for (x = 0; x < numEnharmonics; x++) {
 			// Create the Chord Length
 			chord = new Chord();
 			chord.tickLen = 480;
@@ -467,12 +509,19 @@ function ScoreBUC() {
 			note.pitch = pitch;
 			note.tpc = g_pitch[pitch].enharmonic[x];
 
-			// Print the right notehead type if there is another enharmonic representing this pitch.
 
+			// Check if the previously printed note has the same root pitch and octave, but a flat in front of it.
+			// If so print the previous note again, so we don't get unwanted natural symbol. - Issue #6
+
+			if (pitch !==0 && lastnote.pitch !==0 && (pitch - 1 === lastnote.pitch) && isFlat(lastnote.tpc) && (rootNote(lastnote.tpc) === rootNote(note.tpc))) {
+				note.pitch = lastnote.pitch;
+				note.tpc = lastnote.tpc;
+			}
 			
+			// Print the right notehead type if there is another enharmonic representing this pitch.
 			// Print an X note head if this isn't the most primary representation of an enharmonic
 			
-			if (NotPrimary (note.tpc) && numEnharmonics !== 1 && (numEnharmonics === 3 || isTertiary(note.tpc))) {
+			if (notPrimary(note.tpc) && numEnharmonics !== 1 && (numEnharmonics === 3 || isTertiary(note.tpc))) {
 			 		note.noteHead = 1; 
 			}
 			
@@ -485,19 +534,39 @@ function ScoreBUC() {
 			cursor.next();
 
 		}
-		return true;
+		return true;		
+		
+		// Returns true if tpc represents is a flat or double flat.
+		function isFlat(tpc) {
+			return tpc < 13;
+		}
+		
+		// Root Note
+		function rootNote(tpc) {
+			return tpc % 7;
+		}
 		
 		// Is tpc something other than primary?
-		function NotPrimary(tpc) {
+		function notPrimary(tpc) {
 			return tpc < 13 || tpc > 24;
 		}
 		
-		// Is tpc tertiary? (or is it Ab which is secondary without a third representation of that tone.
+		// Is tpc tertiary? (or is it Ab which is secondary without a tertiary representation.)
 		function isTertiary(tpc) {
 			return tpc < 6 || tpc > 29 || tpc === 10;
 		}
 
 	}
+
+		// Return the TPC last printed TPC. Assumes enharmonic array is sorted greatest to least.
+		function lastTPC(pitch){
+			var lastenharmonic;
+			
+			lastenharmonic = g_pitch[pitch].enharmonic.length - 1;
+		
+			return g_pitch[pitch].enharmonic[lastenharmonic];
+		} 
+
 
 	function AddEndNote() {
 		chord = new Chord();
@@ -506,17 +575,26 @@ function ScoreBUC() {
 
 		// Make the note as the same pitch and enharmonic as the previous note.
 		note = new Note();
-		note.pitch = lastpitch;
+		note.pitch = lastnote.pitch;
+		note.tpc = lastnote.tpc;
+
 		note.visible = false;
-		
-		// The correct representation is the last enharmonic printed, which has been sorted into the last position.
-		note.tpc = g_pitch[lastpitch].enharmonic[g_pitch[lastpitch].enharmonic.length - 1];
-		
+			
 		chord.addNote(note);
 		cursor.add(chord);
 		
 		chord = cursor.chord();
 		chord.noStem = true;
+	}
+
+	function NotesInTreble(){
+	// Middle D (Midi Value 62) and higher in treble 
+		return NotesInRange(62, 126);
+	}
+	
+	function NotesInBass(){
+	// Middle C# (Midi Value 61) and lower in the Bass,
+		return NotesInRange(0, 61);
 	}
 
 	function NotesInRange(begin, end) {
@@ -530,33 +608,11 @@ function ScoreBUC() {
 			}
 		}
 		return usedpitches;
-
 	}
 }
 
-// Find the first or last note used. 
-// x = 1 if we're starting at 0 going to 127.
-// x = -1 if we're starting at 127 going to 0.
-
-function findEnd(direction) {
-	var x;
-
-	if (direction === 1) {
-		x = 0;
-	} else {
-		x = 126;
-	}
-
-	while (!g_pitch[x].used) {
-		x = x + direction;
-	}
-
-	// Wherever stopped is the end.
-	return x;
-}
 
 // See if an array contains an object from http://stackoverflow.com/questions/237104/array-containsobj-in-javascript
-
 function contains(a, obj) {
 	var i;
 	for (i = 0; i < a.length; i++) {
@@ -573,7 +629,7 @@ var mscorePlugin = {
 	minorVersion: 1,
 	menu: 'Plugins.Bells Used',
 	init: GNDN,
-	run: DispDialog
+	run: DisplayDialog
 };
 
 mscorePlugin;
