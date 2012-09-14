@@ -31,7 +31,7 @@ function GNDN() {}
 
 // Display Dialog
 
-function DisplayDialog() {
+function displayDialog() {
 	var loader, file;
 	
 	if (curScore === undefined) {
@@ -42,35 +42,35 @@ function DisplayDialog() {
 	file = new QFile(pluginPath + "/bellsused.ui");
 	file.open(QIODevice.OpenMode(QIODevice.ReadOnly, QIODevice.Text));
 	g_dialog = loader.load(file, null);
-	g_dialog.buttonBox.accepted.connect(ProcessForm);
+	g_dialog.buttonBox.accepted.connect(processForm);
 	g_dialog.show();
 }
 
 // Process the Form
 
-function ProcessForm() {
+function processForm() {
 
 	// Gather the Used Pitches
-	PopulatePitches();
+	populatePitches();
 	
 	if (g_dialog.NewScore.checked) {
-		ScoreBUC();
+		scoreBUC();
 	}
 	if (g_dialog.TextFile.checked || g_dialog.CSVFile.checked) {
-		TextBUC();
+		textBUC();
 	}
 }
 
 
 // Goes through the whole score Chord by Chord and populates the notes used into Pitch Array.
 
-function PopulatePitches() {
+function populatePitches() {
 	var idx, cursor, staff, voice, i, note, pitch, tone, chord, n;
 
 
 	// Fill the pitch array with blanks.
 	for (idx = 0; idx < 127; idx++) {
-		g_pitch[idx] = BlankPitch();
+		g_pitch[idx] = blankPitch();
 	}
 
 
@@ -117,7 +117,7 @@ function PopulatePitches() {
 
 	// Create a Blank Pitch Object
 
-	function BlankPitch() {
+	function blankPitch() {
 		var blank = {};
 
 		blank.used = false;
@@ -131,9 +131,9 @@ function PopulatePitches() {
 // Generates Text Based BUCs
 //
 
-function TextBUC() {
+function textBUC() {
 
-	var idx, unit, fName, file, textStream, octave, x, minPitch, maxPitch, maxOctave = 0,
+	var idx, fName, file, textStream, octave, x, minPitch, maxPitch, maxOctave = 0,
 		NumBellsUsed = 0,
 		NumAccidentalsUsed = 0,
 		title, composer, clipboardBuf, oClipboard, oText;
@@ -154,11 +154,12 @@ function TextBUC() {
 	
 	// Write out the header for the piece. If we have the title and the composer output both. 
 	// If we have just the title output it. If we have neither. don't output any of it.
+	// MuseScore returns an empty string instead of undefined, so we test for that.
 	if (oText) {
 		writeOutput("Notes Used");
-		if (title !== undefined) {
+		if (title !== "") {
 			writeOutput(" in \"" + title + "\"");
-			if (composer !== undefined) {
+			if (composer !== "") {
 				writeOutput(" By: " + composer);
 			}
 		}
@@ -169,13 +170,13 @@ function TextBUC() {
 			writeOutput("Title,Composer,Low Pitch,High Pitch,Octaves Used,");
 
 			for (x = 0; x < 127; x++) {
-				writeOutput(NoteName(x, PrimaryEnharmonicRep(x)) + ",");
+				writeOutput(noteName(x, primaryEnharmonicRep(x)) + ",");
 			}
 			writeOutput("\r\n");
 		}
-		if (title !== undefined) {
+		if (title !== "") {
 			writeOutput(title + ",");
-			if (composer !== undefined) {
+			if (composer !== "") {
 				writeOutput(composer + ",");
 			} else {
 				writeOutput(",");
@@ -188,8 +189,8 @@ function TextBUC() {
 		g_pitch[minPitch].enharmonic.sort(sortenharmonics);
 		g_pitch[maxPitch].enharmonic.sort(sortenharmonics);
 
-		writeOutput(NoteName(minPitch, g_pitch[minPitch].enharmonic[0]) + ",");
-		writeOutput(NoteName(maxPitch, g_pitch[maxPitch].enharmonic[0]) + ",");
+		writeOutput(noteName(minPitch, g_pitch[minPitch].enharmonic[0]) + ",");
+		writeOutput(noteName(maxPitch, g_pitch[maxPitch].enharmonic[0]) + ",");
 		writeOutput(((findOctave(maxPitch) - findOctave(minPitch)) + 1) + ",");
 	}
 
@@ -215,7 +216,7 @@ function TextBUC() {
 		// cycle through the whole enharmonic array
 		for (x = 0; x < g_pitch[idx].enharmonic.length; x++) {
 			// If this enharmonic is contained within the enharmonic only array and this is our first time through increment the accidentals.
-			if (OnlyAccidentalRep(g_pitch[idx].enharmonic[x]) && x === 0) {
+			if (onlyAccidentalRep(g_pitch[idx].enharmonic[x]) && x === 0) {
 				NumAccidentalsUsed++;
 			}
 
@@ -234,7 +235,7 @@ function TextBUC() {
 				}
 			}
 
-			writeOutput(NoteName(idx, g_pitch[idx].enharmonic[x]));
+			writeOutput(noteName(idx, g_pitch[idx].enharmonic[x]));
 
 
 		}
@@ -248,7 +249,7 @@ function TextBUC() {
 	}
 
 	if (oText) {
-		writeOutput("\r\n" + ((findOctave(maxPitch) - findOctave(minPitch)) + 1) + " octaves with " + NumBellsUsed + " bells used ranging from " + NoteName(minPitch, g_pitch[minPitch].enharmonic[0]) + " to " + NoteName(maxPitch, g_pitch[maxPitch].enharmonic[0]) + " with " + NumAccidentalsUsed + " accidentals.\r\n");
+		writeOutput("\r\n" + ((findOctave(maxPitch) - findOctave(minPitch)) + 1) + " octaves with " + NumBellsUsed + " bells used ranging from " + noteName(minPitch, g_pitch[minPitch].enharmonic[0]) + " to " + noteName(maxPitch, g_pitch[maxPitch].enharmonic[0]) + " with " + NumAccidentalsUsed + " accidentals.\r\n");
 	}
 
 	endOutput();
@@ -256,7 +257,7 @@ function TextBUC() {
 	// Return the highest pitch.
 	function findHighPitch(){
 		var x;
-		for(x=126; !g_pitch[x].used; x--);
+		for(x=126; !g_pitch[x].used; x--) { }
 
 		// Wherever the for loop stopped is the end.
 		return x;		
@@ -265,7 +266,7 @@ function TextBUC() {
 	// Return the lowest pitch.
 	function findLowPitch(){
 		var x;
-		for(x=0; !g_pitch[x].used; x++);
+		for(x=0; !g_pitch[x].used; x++) { }
 
 		// Wherever the for loop stopped is the end.
 		return x;	
@@ -274,7 +275,7 @@ function TextBUC() {
 	
 	// Returns True if the primary representation of this note is an acidental 
 	
-	function OnlyAccidentalRep (enharmonic) {
+	function onlyAccidentalRep (enharmonic) {
 		// These are enharmonics that can only be expressed as a sharp or flat
 		var OnlyAccidental = [-1, 0, 8, 9, 10, 11, 12, 20, 21, 22, 23, 24, 32, 33];
 		
@@ -283,7 +284,7 @@ function TextBUC() {
 	
 	// Returns the primary enharmonic given a pitch. 
 	// Primary Enharmonic is the Natural or Sharp representation of a note
-	function PrimaryEnharmonicRep(pitch) {
+	function primaryEnharmonicRep(pitch) {
 		// This the order of enharmonics e.g. 14=C, 21=C#, etc.
 		var EnharmonicOrder = [14, 21, 16, 23, 18, 13, 20, 15, 22, 17, 24, 19];
 		
@@ -317,30 +318,23 @@ function TextBUC() {
 	}
 	// Return the note name
 
-	function NoteName(pitch, enharmonic) {
+	function noteName(pitch, enharmonic) {
 		var notes = ["C", "G", "D", "A", "E", "B", "F"],
-			accidental, accsymbols = ["bb", "b", "#", "##"];
+			accidental, accsymbols = ["bb", "b", "", "#", "##"];
 
-		// find and assign the proper accidental
-		if (enharmonic <= 5) {
-			accidental = accsymbols[0];
-		} else if (enharmonic <= 12) {
-			accidental = accsymbols[1];
-		} else if (enharmonic <= 19) {
-			accidental = "";
-		} else if (enharmonic <= 26) {
-			accidental = accsymbols[2];
-		} else {
-			accidental = accsymbols[3];
-		}
+		// find and assign the proper accidental		
+		accidental = 	enharmonic < 6  ? 0 :
+						enharmonic < 13 ? 1 :
+						enharmonic < 20 ? 2 :
+						enharmonic < 27 ? 3 :
+								 		  4;
 
-		// the enharmonics nicely line up with note names if we divide by 7 and take the remainder.
-		return (notes[enharmonic % 7] + accidental + findOctave(pitch));
+		// the enharmonics nicely line up with note names for mod 7
+		return (notes[enharmonic % 7] + accsymbols[accidental] + findOctave(pitch));
 
 	}
 
 	// Given a pitch, return what octave it is in.
-
 	function findOctave(pitch) {
 		// Find the proper octave and return it. Despite this looking odd a case/switch wouldn't work here
 		// And thanks to Ben its so much cleaner than a series of If/Else statements
@@ -404,7 +398,7 @@ function TextBUC() {
 }
 
 
-function ScoreBUC() {
+function scoreBUC() {
 	var title, composer, measurelen, idx, score, cursor, lastnote, basslen, treblelen, chord, note;
 
 	// Set up some details for later
@@ -412,8 +406,8 @@ function ScoreBUC() {
 	composer = curScore.composer;
 
 	// Find the number of notes in each clef
-	basslen = NotesInBass();
-	treblelen = NotesInTreble();
+	basslen = notesInBass();
+	treblelen = notesInTreble();
 
 	// Assign measure length to the larger between the notes in the Bass or treble clef.
 	measurelen = Math.max(basslen, treblelen);
@@ -423,19 +417,18 @@ function ScoreBUC() {
 
 	// Create the Score	
 	score = new Score();
+	
 	score.title = title + " - Bells Used";
 	score.composer = composer;
 
 	// Make a measure of the appropriate length, so there are no barlines in the BUC.
-	score.timesig = new TimeSig(measurelen, 4);
-
+	score.timesig =  new TimeSig(measurelen, 4);
 	// Be explicit: we want C Major/A Minor (0 flats/sharps) in key sig.
 	score.keysig = 0;
 
 	// create two staff piano part, sadly the format for bells isn't what we'd like
 	score.appendPart("Piano");
 	score.appendMeasures(1);
-
 	cursor = new Cursor(score);
 
 	// Bass Clef
@@ -446,16 +439,15 @@ function ScoreBUC() {
 	// add the bass clef notes
 	for (idx = 0; idx <= 61; idx++) {
 		// Process the pitch, and if we added a pitch set the last note value
-		if (ProcessPitch(idx)) {
+		if (processPitch(idx)) {
 			lastnote.pitch = idx;
 			lastnote.tpc = lastTPC(idx);
 		}
 	}
 
-	// If bass is smaller add a hidden padding note.
-
+	// If we have fewer bass notes than treble notes add a hidden padding note.
 	if (basslen < treblelen) {
-		AddEndNote();
+		addEndNote();
 	}
 
 
@@ -467,23 +459,25 @@ function ScoreBUC() {
 	// add the treble clef notes
 	for (idx = 62; idx <= 126; idx++) {
 		// Process the pitch, and if we added a pitch set the last note value
-		if (ProcessPitch(idx)) {
+		if (processPitch(idx)) {
 			lastnote.pitch = idx;
 			lastnote.tpc = lastTPC(idx);
 		}
 	}
 
-	// If treble is smaller add a hidden padding note.
-
+	// If we have fewer treble notes than bass notes add a hidden padding note.
 	if (treblelen < basslen) {
-		AddEndNote();
+		addEndNote();
 	}
+	
+	// by ending the "undo" it'll display the score.
+	score.endUndo();
 
-
+	
 	return;
 
 
-	function ProcessPitch(pitch) {
+	function processPitch(pitch) {
 		var x, numEnharmonics;
 
 		numEnharmonics = g_pitch[pitch].enharmonic.length;
@@ -568,7 +562,7 @@ function ScoreBUC() {
 		} 
 
 
-	function AddEndNote() {
+	function addEndNote() {
 		chord = new Chord();
 		// Figure out the length of the hidden note.
 		chord.tickLen = Math.abs(basslen - treblelen) * 480;
@@ -587,17 +581,17 @@ function ScoreBUC() {
 		chord.noStem = true;
 	}
 
-	function NotesInTreble(){
+	function notesInTreble(){
 	// Middle D (Midi Value 62) and higher in treble 
-		return NotesInRange(62, 126);
+		return notesInRange(62, 126);
 	}
 	
-	function NotesInBass(){
+	function notesInBass(){
 	// Middle C# (Midi Value 61) and lower in the Bass,
-		return NotesInRange(0, 61);
+		return notesInRange(0, 61);
 	}
 
-	function NotesInRange(begin, end) {
+	function notesInRange(begin, end) {
 		var usedpitches = 0,
 			x;
 
@@ -629,7 +623,7 @@ var mscorePlugin = {
 	minorVersion: 1,
 	menu: 'Plugins.Bells Used',
 	init: GNDN,
-	run: DisplayDialog
+	run: displayDialog
 };
 
 mscorePlugin;
