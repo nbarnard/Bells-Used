@@ -11,31 +11,13 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Choose output format</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="QLabel" name="label">
-     <property name="font">
-      <font>
-       <pointsize>20</pointsize>
-      </font>
-     </property>
-     <property name="text">
-      <string>Choose output format</string>
-     </property>
-     <property name="textFormat">
-      <enum>Qt::LogText</enum>
-     </property>
-     <property name="wordWrap">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QRadioButton" name="NewScore">
+    <widget class="QRadioButton" name="radioScore">
      <property name="toolTip">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Creates Bells Used in a New Score&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Creates bells used as a new score.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
      <property name="text">
       <string>Score</string>
@@ -46,9 +28,9 @@
     </widget>
    </item>
    <item>
-    <widget class="QRadioButton" name="TextFile">
+    <widget class="QRadioButton" name="radioText">
      <property name="toolTip">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Creates a plain text listing of bells used&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Creates a plain text listing of bells used.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
      <property name="text">
       <string>Plain Text</string>
@@ -56,9 +38,9 @@
     </widget>
    </item>
    <item>
-    <widget class="QRadioButton" name="CSVFile">
+    <widget class="QRadioButton" name="radioCSV">
      <property name="toolTip">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Creates a CSV (Comma Separated Values) output for use in spreadsheet software.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Creates a bells used in CSV (Comma Separated Values) output for use in spreadsheet software.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
      <property name="text">
       <string>CSV (Comma Separated Values)</string>
@@ -79,35 +61,24 @@
     </spacer>
    </item>
    <item>
-    <widget class="QCheckBox" name="IncludeHeader">
+    <widget class="QCheckBox" name="checkCSVHeader">
      <property name="text">
-      <string>Include CSV Header</string>
+      <string>Include Header Row</string>
      </property>
-     <property name="checked">
-      <bool>true</bool>
-     </property>
-      <property name="visible">
-     <bool>false</bool>
+       <property name="toolTip">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Places a header in the first line of the CSV file.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="ToClipboard">
-     <property name="enabled">
-      <bool>true</bool>
-     </property>
-     <property name="visible">
-      <bool>true</bool>
-     </property>
+    <widget class="QCheckBox" name="checkClipboard">
      <property name="text">
       <string>Copy to Clipboard</string>
      </property>
-     <property name="checkable">
-      <bool>true</bool>
+    <property name="toolTip">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Copies text or CSV output to the clipboard.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
-     <property name="visible">
-     <bool>false</bool>
-     </property>
+
     </widget>
    </item>
    <item>
@@ -156,101 +127,5 @@
     </hint>
    </hints>
   </connection>
-  <connection>
-   <sender>NewScore</sender>
-   <signal>clicked()</signal>
-   <receiver>ToClipboard</receiver>
-   <slot>hide()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>180</x>
-     <y>51</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>184</x>
-     <y>132</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>TextFile</sender>
-   <signal>clicked()</signal>
-   <receiver>ToClipboard</receiver>
-   <slot>show()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>180</x>
-     <y>70</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>184</x>
-     <y>132</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>CSVFile</sender>
-   <signal>clicked()</signal>
-   <receiver>ToClipboard</receiver>
-   <slot>show()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>180</x>
-     <y>89</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>184</x>
-     <y>132</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>CSVFile</sender>
-   <signal>clicked()</signal>
-   <receiver>IncludeHeader</receiver>
-   <slot>show()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>180</x>
-     <y>89</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>184</x>
-     <y>133</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>TextFile</sender>
-   <signal>clicked()</signal>
-   <receiver>IncludeHeader</receiver>
-   <slot>hide()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>180</x>
-     <y>70</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>184</x>
-     <y>133</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>NewScore</sender>
-   <signal>clicked()</signal>
-   <receiver>IncludeHeader</receiver>
-   <slot>hide()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>180</x>
-     <y>51</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>184</x>
-     <y>133</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+</connections>
 </ui>

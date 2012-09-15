@@ -35,28 +35,54 @@ function displayDialog() {
 	var loader, file;
 
 	if (curScore === undefined) {
-		QMessageBox.critical(g_dialog, "Feedback", "Please Open or Select a Score from which to Create a Bells Used Display.");
+		QMessageBox.critical(g_dialog, "Feedback", "Please Open or Select a Score from which to Create a Bells Used.");
 		return;
 	}
 	loader = new QUiLoader(null);
 	file = new QFile(pluginPath + "/bellsused.ui");
 	file.open(QIODevice.OpenMode(QIODevice.ReadOnly, QIODevice.Text));
 	g_dialog = loader.load(file, null);
+	
+	// connect signals
 	g_dialog.buttonBox.accepted.connect(processForm);
+	g_dialog.radioScore.toggled.connect(changedRadio);
+	g_dialog.radioText.toggled.connect(changedRadio);
+	g_dialog.radioCSV.toggled.connect(changedRadio);
+
+	// Set initial visible elements	
+	g_dialog.checkClipboard.visible = false;
+	g_dialog.checkCSVHeader.visible = false;
+	g_dialog.checkCSVHeader.checked = true;
+	
 	g_dialog.show();
 }
 
-// Process the Form
+// Adjust the visible elements on the form per the current checked radio button.
+function changedRadio() {
+	if (g_dialog.radioScore.checked) {
+		g_dialog.checkClipboard.visible = false;
+		g_dialog.checkCSVHeader.visible = false;
+	}
+	if (g_dialog.radioText.checked) {
+		g_dialog.checkClipboard.visible = true;
+		g_dialog.checkCSVHeader.visible = false;
+	}
+	if (g_dialog.radioCSV.checked) {
+		g_dialog.checkClipboard.visible = true;
+		g_dialog.checkCSVHeader.visible = true;
+	}
+}
 
+// Process the Form
 function processForm() {
 
 	// Gather the Used Pitches
 	populatePitches();
 
-	if (g_dialog.NewScore.checked) {
+	if (g_dialog.radioScore.checked) {
 		scoreBUC();
 	}
-	if (g_dialog.TextFile.checked || g_dialog.CSVFile.checked) {
+	if (g_dialog.radioText.checked || g_dialog.radioCSV.checked) {
 		textBUC();
 	}
 }
@@ -138,8 +164,8 @@ function textBUC() {
 		NumAccidentalsUsed = 0,
 		title, composer, clipboardBuf, oClipboard, oText;
 
-	oClipboard = g_dialog.ToClipboard.checked;
-	oText = g_dialog.TextFile.checked;
+	oClipboard = g_dialog.checkClipboard.checked;
+	oText = g_dialog.radioText.checked;
 
 	// Set up some details for later
 	title = curScore.title;
@@ -165,7 +191,7 @@ function textBUC() {
 		}
 		writeOutput(":\r\n");
 	} else {
-		if (g_dialog.IncludeHeader.checked) {
+		if (g_dialog.checkCSVHeader.checked) {
 			// Write out all the header including all the notes in order
 			writeOutput("Title,Composer,Low Pitch,High Pitch,Octaves Used,");
 
@@ -345,11 +371,11 @@ function textBUC() {
 
 	function startOutput() {
 		if (!oClipboard) {
-			// Open a file selection dlg
+			// Open a file selection dialog
 			if (oText) {
-				fName = QFileDialog.getSaveFileName(g_dialog, "Select .txt file to create", "", "TXT file (*.txt)", 0);
+				fName = QFileDialog.getSaveFileName(g_dialog, "Bells Used: Save Text Bells Used", "", "TXT file (*.txt)", 0);
 			} else {
-				fName = QFileDialog.getSaveFileName(g_dialog, "Select .csv file to create", "", "CSV file (*.csv)", 0);
+				fName = QFileDialog.getSaveFileName(g_dialog, "Bells Used: Save CSV Bells Used", "", "CSV file (*.csv)", 0);
 			}
 
 			if (fName === null || fName === "") {
