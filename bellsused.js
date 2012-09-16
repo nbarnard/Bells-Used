@@ -23,58 +23,91 @@
 // This is ECMAScript code (ECMA-262 aka "Java Script")
 //
 var g_pitch = []; // Pitch array
-var g_dialog; // Global containing dialog
+var g_dialog; // for dialog boxes
+var g_settings; // for settings
 
 // A blank function, since we don't need to run when MuseScore loads or closes, only when we're called.
-
 function GNDN() {}
 
-// Display Dialog
-
-function displayDialog() {
+// Initializes BellsUsed 
+function bellsUsed(){
 	var loader, file;
 
-	if (curScore === undefined) {
+	// We need to use typeof here instead of directly checking for undefined as the variable doesn't exist until a score is opened.
+	if (typeof curScore === 'undefined') {
 		QMessageBox.critical(g_dialog, "Feedback", "Please Open or Select a Score from which to Create a Bells Used.");
 		return;
 	}
+	
+	// Load the form so we can populate it.
 	loader = new QUiLoader(null);
 	file = new QFile(pluginPath + "/bellsused.ui");
 	file.open(QIODevice.OpenMode(QIODevice.ReadOnly, QIODevice.Text));
 	g_dialog = loader.load(file, null);
-	
+
+	// Get Settings and populate the form
+	g_settings = new QSettings(QSettings.NativeFormat, QSettings.UserScope, "MusE", "pluginBellsUsed", null);
+
+	g_dialog.radioScore.checked = g_settings.value("Score", false);
+	g_dialog.radioText.checked = g_settings.value("Text", false);
+	g_dialog.radioCSV.checked = g_settings.value("CSV", false); 
+	g_dialog.checkClipboard.checked = g_settings.value("Clipboard", false); 
+	g_dialog.checkCSVHeader.checked = g_settings.value("CSVHeader", true); 
+
+	if(g_settings.value("showDialog", true)) {
+		displayDialog();
+	} else {
+		processForm();
+	}
+}
+
+// Display Dialog
+function displayDialog() {
 	// connect signals
 	g_dialog.buttonBox.accepted.connect(processForm);
 	g_dialog.radioScore.toggled.connect(changedRadio);
 	g_dialog.radioText.toggled.connect(changedRadio);
 	g_dialog.radioCSV.toggled.connect(changedRadio);
 
-	// Set initial visible elements	
-	g_dialog.checkClipboard.visible = false;
-	g_dialog.checkCSVHeader.visible = false;
-	g_dialog.checkCSVHeader.checked = true;
-	
+	// Call Changed Radio to Set visible items properly.
+	changedRadio();
+
 	g_dialog.show();
 }
 
 // Adjust the visible elements on the form per the current checked radio button.
 function changedRadio() {
-	if (g_dialog.radioScore.checked) {
-		g_dialog.checkClipboard.visible = false;
-		g_dialog.checkCSVHeader.visible = false;
-	}
 	if (g_dialog.radioText.checked) {
-		g_dialog.checkClipboard.visible = true;
-		g_dialog.checkCSVHeader.visible = false;
-	}
+		g_dialog.checkClipboard.enabled = true;
+		g_dialog.checkCSVHeader.enabled = false;
+		return;
+	} 
 	if (g_dialog.radioCSV.checked) {
-		g_dialog.checkClipboard.visible = true;
-		g_dialog.checkCSVHeader.visible = true;
+		g_dialog.checkClipboard.enabled = true;
+		g_dialog.checkCSVHeader.enabled = true;
+		return;
 	}
+	
+	// No radio is selected, or radioScore is selected.
+	g_dialog.checkClipboard.enabled = false;
+	g_dialog.checkCSVHeader.enabled = false;
+	return;
+		
 }
 
 // Process the Form
 function processForm() {
+	// Save the settings if requested.
+	if(g_settings.value("cacheSettings", true)) {
+		g_settings.setValue("Score", g_dialog.radioScore.checked);
+		g_settings.setValue("Text", g_dialog.radioText.checked);
+		g_settings.setValue("CSV", g_dialog.radioCSV.checked);
+		g_settings.setValue("Clipboard", g_dialog.checkClipboard.checked);
+		g_settings.setValue("CSVHeader", g_dialog.checkCSVHeader.checked);
+	
+		// Save to disk
+		g_settings.sync(); 
+	}
 
 	// Gather the Used Pitches
 	populatePitches();
@@ -87,18 +120,21 @@ function processForm() {
 	}
 }
 
-
 // Goes through the whole score Chord by Chord and populates the notes used into Pitch Array.
-
 function populatePitches() {
-	var idx, cursor, staff, voice, i, note, pitch, tone, chord, n;
+	// Blank Pitch Object
+	function BlankPitch() {
+		this.used = false;
+		this.enharmonic = [];
+	}
 
+	// Beginning of pouplatePitches
+	var idx, cursor, staff, voice, i, note, pitch, tone, chord, n;
 
 	// Fill the pitch array with blanks.
 	for (idx = 0; idx < 127; idx++) {
-		g_pitch[idx] = blankPitch();
+		g_pitch[idx] = new BlankPitch();
 	}
-
 
 	cursor = new Cursor(curScore);
 
@@ -140,24 +176,143 @@ function populatePitches() {
 			}
 		}
 	}
-
-	// Create a Blank Pitch Object
-
-	function blankPitch() {
-		var blank = {};
-
-		blank.used = false;
-		blank.enharmonic = [];
-
-		return blank;
-	}
-
 }
 
 // Generates Text Based BUCs
-//
-
 function textBUC() {
+	// Return the highest pitch.
+	function findHighPitch() {
+		var x;
+		for (x = 126; !g_pitch[x].used; x--) {}
+
+		// Wherever the for loop stopped is the end.
+		return x;
+	}
+
+	// Return the lowest pitch.
+	function findLowPitch() {
+		var x;
+		for (x = 0; !g_pitch[x].used; x++) {}
+
+		// Wherever the for loop stopped is the end.
+		return x;
+	}
+
+	// Returns True if the primary representation of this note is an acidental 
+	function onlyAccidentalRep(enharmonic) {
+		// These are enharmonics that can only be expressed as a sharp or flat
+		var OnlyAccidental = [-1, 0, 8, 9, 10, 11, 12, 20, 21, 22, 23, 24, 32, 33];
+
+		return contains(OnlyAccidental, enharmonic);
+	}
+
+	// Returns the primary enharmonic given a pitch. 
+	// Primary Enharmonic is the Natural or Sharp representation of a note
+	function primaryEnharmonicRep(pitch) {
+		// This the order of enharmonics e.g. 14=C, 21=C#, etc.
+		var EnharmonicOrder = [14, 21, 16, 23, 18, 13, 20, 15, 22, 17, 24, 19];
+
+		return EnharmonicOrder[pitch % 12];
+	}
+
+	// Sorts enharmonics from most preferred to least preferred.
+	// We prefer a natural to any accidental, and a single accidental to a double accidental.
+	function sortenharmonics(a, b) {
+		// Primary representation of notes are between 13 and 24. If a or b is in that range it should be first.
+		if ((a >= 13) && (a <= 24)) {
+			return -1;
+		}
+
+		if ((b >= 13) && (b <= 24)) {
+			return 1;
+		}
+
+		// Tertiary notes are <=5 or >=30 they should be last. If a or b is in that range it should be last.
+		if ((a <= 5) || (a >= 30)) {
+			return 1;
+		}
+
+		if ((b <= 5) || (b >= 30)) {
+			return -1;
+		}
+
+		// Although in practice we shouldn't get two values that could be considered equal, just in case we somehow did.
+		return 0;
+	}
+	
+	// Return the note name
+	function noteName(pitch, enharmonic) {
+		var notes = ["C", "G", "D", "A", "E", "B", "F"],
+			accidental, accsymbols = ["bb", "b", "", "#", "##"];
+
+		// find and assign the proper accidental		
+		accidental = enharmonic < 6 ? 0 : enharmonic < 13 ? 1 : enharmonic < 20 ? 2 : enharmonic < 27 ? 3 : 4;
+
+		// the enharmonics nicely line up with note names for mod 7
+		return (notes[enharmonic % 7] + accsymbols[accidental] + findOctave(pitch));
+
+	}
+
+	// Given a pitch, return what octave it is in.
+	function findOctave(pitch) {
+		// Find the proper octave and return it. Despite this looking odd a case/switch wouldn't work here
+		// And thanks to Ben its so much cleaner than a series of If/Else statements
+
+		return pitch < 12 ? 0 : pitch < 24 ? 1 : pitch < 36 ? 2 : pitch < 48 ? 3 : pitch < 60 ? 4 : pitch < 72 ? 5 : pitch < 84 ? 6 : pitch < 96 ? 7 : pitch < 108 ? 8 : pitch < 120 ? 9 : 10;
+	}
+
+	// Start the output. 
+	function startOutput() {
+		if (!oClipboard) {
+			// Open a file selection dialog
+			if (oText) {
+				fName = QFileDialog.getSaveFileName(g_dialog, "Bells Used: Save Text Bells Used", "", "TXT file (*.txt)", 0);
+			} else {
+				fName = QFileDialog.getSaveFileName(g_dialog, "Bells Used: Save CSV Bells Used", "", "CSV file (*.csv)", 0);
+			}
+
+			if (fName === null || fName === "") {
+				return false;
+			}
+			// Open data file as a text stream
+			//
+			file = new QFile(fName);
+			if (file.exists()) {
+				file.remove();
+			}
+			if (!file.open(QIODevice.ReadWrite)) {
+				QMessageBox.critical(g_dialog, "File Error", "Could not create output file " + fName);
+				return false;
+			}
+			textStream = new QTextStream(file);
+		} else {
+			// Initialize clipboard buffer with a blank.
+			clipboardBuf = "";
+		}
+		return true;
+	}
+
+	// Add to our output
+	function writeOutput(buf) {
+		if (!oClipboard) {
+			textStream.writeString(buf);
+		} else {
+			clipboardBuf = clipboardBuf + buf;
+		}
+	}
+
+	// Close our output.
+	function endOutput() {
+		if (!oClipboard) {
+			file.close();
+		} else {
+			QApplication.clipboard().setText(clipboardBuf, 0);
+			QMessageBox.information(g_dialog, "Complete", "Bells Used on Clipboard");
+		}
+		return;
+	}
+
+	// Start of textBUC function
 
 	var idx, fName, file, textStream, octave, x, minPitch, maxPitch, maxOctave = 0,
 		NumBellsUsed = 0,
@@ -222,55 +377,49 @@ function textBUC() {
 
 	// Iterate through all the notes from the bottom to the top printing out the ones that are used.
 	for (idx = 0; idx < 127; idx++) {
+		// Check if note is process the note  as used/unused
+		if (g_pitch[idx].used) {
+			// Find the proper octave
+			octave = findOctave(idx);
+			// update the number of bells used
+			NumBellsUsed++;
+			// sort the enharmonics 
+			g_pitch[idx].enharmonic.sort(sortenharmonics);
 
-		// Check if note is unused, if so process properly  
-		if (!g_pitch[idx].used) {
+			// cycle through the whole enharmonic array
+			for (x = 0; x < g_pitch[idx].enharmonic.length; x++) {
+				// If this enharmonic is contained within the enharmonic only array and this is our first time through increment the accidentals.
+				if (onlyAccidentalRep(g_pitch[idx].enharmonic[x]) && x === 0) {
+					NumAccidentalsUsed++;
+				}
+
+				// If we're starting a new octave put an extra line feed for text output in and set the highest octave
+				if ((oText) && (octave > maxOctave)) {
+					maxOctave = octave;
+					writeOutput("\r\n");
+				}
+
+				// If we have more than one enharmonic seperate them with a slash for text, a dash for CSV.
+				if (x !== 0) {
+					if (oText) {
+						writeOutput("\\");
+					} else {
+						writeOutput("-");
+					}
+				}
+				writeOutput(noteName(idx, g_pitch[idx].enharmonic[x]));
+			}
+			// if its text output a linefeed, if CSV output output a comma.
+			if (oText) {
+				writeOutput("\r\n");
+			} else {
+				writeOutput(",");
+			}
+		} else {
 			// Print an empty cell for CSV
 			if (!oText) {
 				writeOutput(",");
 			}
-			continue; // Skip the rest of the loop
-		}
-
-		// Find the proper octave
-		octave = findOctave(idx);
-		// update the number of bells used
-		NumBellsUsed++;
-		// sort the enharmonics 
-		g_pitch[idx].enharmonic.sort(sortenharmonics);
-
-		// cycle through the whole enharmonic array
-		for (x = 0; x < g_pitch[idx].enharmonic.length; x++) {
-			// If this enharmonic is contained within the enharmonic only array and this is our first time through increment the accidentals.
-			if (onlyAccidentalRep(g_pitch[idx].enharmonic[x]) && x === 0) {
-				NumAccidentalsUsed++;
-			}
-
-			// If we're starting a new octave put an extra line feed for text output in and set the highest octave
-			if ((oText) && (octave > maxOctave)) {
-				maxOctave = octave;
-				writeOutput("\r\n");
-			}
-
-			// If we have more than one enharmonic seperate them with a slash for text, a dash for CSV.
-			if (x !== 0) {
-				if (oText) {
-					writeOutput("\\");
-				} else {
-					writeOutput("-");
-				}
-			}
-
-			writeOutput(noteName(idx, g_pitch[idx].enharmonic[x]));
-
-
-		}
-
-		// if its text output output a linefeed, if CSV output output a comma.
-		if (oText) {
-			writeOutput("\r\n");
-		} else {
-			writeOutput(",");
 		}
 	}
 
@@ -279,151 +428,10 @@ function textBUC() {
 	}
 
 	endOutput();
-
-	// Return the highest pitch.
-
-	function findHighPitch() {
-		var x;
-		for (x = 126; !g_pitch[x].used; x--) {}
-
-		// Wherever the for loop stopped is the end.
-		return x;
-	}
-
-	// Return the lowest pitch.
-
-	function findLowPitch() {
-		var x;
-		for (x = 0; !g_pitch[x].used; x++) {}
-
-		// Wherever the for loop stopped is the end.
-		return x;
-	}
-
-
-	// Returns True if the primary representation of this note is an acidental 
-
-	function onlyAccidentalRep(enharmonic) {
-		// These are enharmonics that can only be expressed as a sharp or flat
-		var OnlyAccidental = [-1, 0, 8, 9, 10, 11, 12, 20, 21, 22, 23, 24, 32, 33];
-
-		return contains(OnlyAccidental, enharmonic);
-	}
-
-	// Returns the primary enharmonic given a pitch. 
-	// Primary Enharmonic is the Natural or Sharp representation of a note
-
-	function primaryEnharmonicRep(pitch) {
-		// This the order of enharmonics e.g. 14=C, 21=C#, etc.
-		var EnharmonicOrder = [14, 21, 16, 23, 18, 13, 20, 15, 22, 17, 24, 19];
-
-		return EnharmonicOrder[pitch % 12];
-	}
-
-	// Sorts enharmonics from most preferred to least preferred.
-	// We prefer a natural to any accidental, and a single accidental to a double accidental.
-
-	function sortenharmonics(a, b) {
-		// Primary representation of notes are between 13 and 24. If a or b is in that range it should be first.
-		if ((a >= 13) && (a <= 24)) {
-			return -1;
-		}
-
-		if ((b >= 13) && (b <= 24)) {
-			return 1;
-		}
-
-		// Tertiary notes are <=5 or >=30 they should be last. If a or b is in that range it should be last.
-		if ((a <= 5) || (a >= 30)) {
-			return 1;
-		}
-
-		if ((b <= 5) || (b >= 30)) {
-			return -1;
-		}
-
-		// Although in practice we shouldn't get two values that could be considered equal, just in case we somehow did.
-		return 0;
-	}
-	// Return the note name
-
-	function noteName(pitch, enharmonic) {
-		var notes = ["C", "G", "D", "A", "E", "B", "F"],
-			accidental, accsymbols = ["bb", "b", "", "#", "##"];
-
-		// find and assign the proper accidental		
-		accidental = enharmonic < 6 ? 0 : enharmonic < 13 ? 1 : enharmonic < 20 ? 2 : enharmonic < 27 ? 3 : 4;
-
-		// the enharmonics nicely line up with note names for mod 7
-		return (notes[enharmonic % 7] + accsymbols[accidental] + findOctave(pitch));
-
-	}
-
-	// Given a pitch, return what octave it is in.
-
-	function findOctave(pitch) {
-		// Find the proper octave and return it. Despite this looking odd a case/switch wouldn't work here
-		// And thanks to Ben its so much cleaner than a series of If/Else statements
-
-		return pitch < 12 ? 0 : pitch < 24 ? 1 : pitch < 36 ? 2 : pitch < 48 ? 3 : pitch < 60 ? 4 : pitch < 72 ? 5 : pitch < 84 ? 6 : pitch < 96 ? 7 : pitch < 108 ? 8 : pitch < 120 ? 9 : 10;
-	}
-	// Start the output. 
-
-	function startOutput() {
-		if (!oClipboard) {
-			// Open a file selection dialog
-			if (oText) {
-				fName = QFileDialog.getSaveFileName(g_dialog, "Bells Used: Save Text Bells Used", "", "TXT file (*.txt)", 0);
-			} else {
-				fName = QFileDialog.getSaveFileName(g_dialog, "Bells Used: Save CSV Bells Used", "", "CSV file (*.csv)", 0);
-			}
-
-			if (fName === null || fName === "") {
-				return false;
-			}
-			// Open data file as a text stream
-			//
-			file = new QFile(fName);
-			if (file.exists()) {
-				file.remove();
-			}
-			if (!file.open(QIODevice.ReadWrite)) {
-				QMessageBox.critical(g_dialog, "File Error", "Could not create output file " + fName);
-				return false;
-			}
-			textStream = new QTextStream(file);
-		} else {
-			// Initialize clipboard buffer with a blank.
-			clipboardBuf = "";
-		}
-		return true;
-	}
-
-	// Add to our output
-
-	function writeOutput(buf) {
-		if (!oClipboard) {
-			textStream.writeString(buf);
-		} else {
-			clipboardBuf = clipboardBuf + buf;
-		}
-	}
-	// Close our output.
-
-	function endOutput() {
-		if (!oClipboard) {
-			file.close();
-		} else {
-			QApplication.clipboard().setText(clipboardBuf, 0);
-			QMessageBox.information(g_dialog, "Complete", "Bells Used on Clipboard");
-		}
-		return;
-	}
 }
 
-
+// Generates Score BUC
 function scoreBUC() {
-
 	var notesInRange = function(x) {
 		if (g_pitch[x].used) {
 			usedpitches = usedpitches + g_pitch[x].enharmonic.length;
@@ -515,7 +523,6 @@ function scoreBUC() {
 
 
 	// Return the TPC last printed TPC. Assumes enharmonic array is sorted greatest to least.
-
 	function lastTPC(pitch) {
 		var lastenharmonic;
 
@@ -523,7 +530,6 @@ function scoreBUC() {
 
 		return g_pitch[pitch].enharmonic[lastenharmonic];
 	}
-
 
 	function addEndNote() {
 		chord = new Chord();
@@ -561,7 +567,6 @@ function scoreBUC() {
 	}
 
 	// Walks the Treble clef and passes our current position to function fnc.
-
 	function walkTreble(fnc) {
 		var x;
 
@@ -571,7 +576,6 @@ function scoreBUC() {
 	}
 
 	// Walks the Bass clef and passes our current position to function fnc.
-
 	function walkBass(fnc) {
 		var x;
 
@@ -581,9 +585,7 @@ function scoreBUC() {
 	}
 
 	// Beginning of scoreBUC
-
 	var title, composer, measurelen, idx, score, cursor, lastnote, basslen, treblelen, chord, note, usedpitches;
-
 
 	// Set up some details for later
 	title = curScore.title;
@@ -627,14 +629,12 @@ function scoreBUC() {
 		addEndNote();
 	}
 
-
 	// Treble Clef
 	cursor.staff = 0;
 	cursor.voice = 0;
 	cursor.rewind();
 
 	walkTreble(processPitch);
-
 
 	// If we have fewer treble notes than bass notes add a hidden padding note.
 	if (treblelen < basslen) {
@@ -649,7 +649,6 @@ function scoreBUC() {
 
 
 // See if an array contains an object from http://stackoverflow.com/questions/237104/array-containsobj-in-javascript
-
 function contains(a, obj) {
 	var i;
 	for (i = 0; i < a.length; i++) {
@@ -661,12 +660,12 @@ function contains(a, obj) {
 }
 
 // Defines how MuseScore interacts with this plugin
-var mscorePlugin = {
+var bellsusedPlugin = {
 	majorVersion: 1,
 	minorVersion: 1,
 	menu: 'Plugins.Bells Used',
 	init: GNDN,
-	run: displayDialog
+	run: bellsUsed
 };
 
-mscorePlugin;
+bellsusedPlugin;
