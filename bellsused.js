@@ -51,7 +51,8 @@ function bellsUsed(){
 	g_dialog.radioScore.checked = g_settings.value("Score", false);
 	g_dialog.radioText.checked = g_settings.value("Text", false);
 	g_dialog.radioCSV.checked = g_settings.value("CSV", false); 
-	g_dialog.checkClipboard.checked = g_settings.value("Clipboard", false); 
+	g_dialog.textOutput.checkClipboard.checked = g_settings.value("Clipboard", false); 
+	g_dialog.textOutput.checkUseRealSharpFlat.checked =  g_settings.value("UseRealSharpFlat", true); 
 	g_dialog.checkCSVHeader.checked = g_settings.value("CSVHeader", true); 
 
 	if(g_settings.value("showDialog", true)) {
@@ -78,19 +79,19 @@ function displayDialog() {
 // Adjust the visible elements on the form per the current checked radio button.
 function changedRadio() {
 	if (g_dialog.radioText.checked) {
-		g_dialog.checkClipboard.enabled = true;
-		g_dialog.checkCSVHeader.enabled = false;
+		g_dialog.textOutput.enabled = true;
+		g_dialog.checkCSVHeader.visible = false;
 		return;
 	} 
 	if (g_dialog.radioCSV.checked) {
-		g_dialog.checkClipboard.enabled = true;
-		g_dialog.checkCSVHeader.enabled = true;
+		g_dialog.textOutput.enabled = true;
+		g_dialog.checkCSVHeader.visible = true;
 		return;
 	}
 	
 	// No radio is selected, or radioScore is selected.
-	g_dialog.checkClipboard.enabled = false;
-	g_dialog.checkCSVHeader.enabled = false;
+	g_dialog.textOutput.enabled = false;
+	g_dialog.checkCSVHeader.visible = false;
 	return;
 		
 }
@@ -102,7 +103,8 @@ function processForm() {
 		g_settings.setValue("Score", g_dialog.radioScore.checked);
 		g_settings.setValue("Text", g_dialog.radioText.checked);
 		g_settings.setValue("CSV", g_dialog.radioCSV.checked);
-		g_settings.setValue("Clipboard", g_dialog.checkClipboard.checked);
+		g_settings.setValue("Clipboard", g_dialog.textOutput.checkClipboard.checked);
+		g_settings.setValue("UseRealSharpFlat", g_dialog.textOutput.checkUseRealSharpFlat.checked); 
 		g_settings.setValue("CSVHeader", g_dialog.checkCSVHeader.checked);
 	
 		// Save to disk
@@ -243,8 +245,14 @@ function textBUC() {
 	// Return the note name
 	function noteName(pitch, enharmonic) {
 		var notes = ["C", "G", "D", "A", "E", "B", "F"],
-			accidental, accsymbols = ["bb", "b", "", "#", "##"];
-
+			accidental, accsymbols;
+			
+			if(g_dialog.textOutput.checkUseRealSharpFlat.checked) {
+				accsymbols = ["\uD834\uDD2B", "\u266D", "", "\u266F", "\uD834\uDD2A"];
+			} else {
+				accsymbols = ["bb", "b", "", "#", "##"];
+			}
+			
 		// find and assign the proper accidental		
 		accidental = enharmonic < 6 ? 0 : enharmonic < 13 ? 1 : enharmonic < 20 ? 2 : enharmonic < 27 ? 3 : 4;
 
@@ -319,7 +327,7 @@ function textBUC() {
 		NumAccidentalsUsed = 0,
 		title, composer, clipboardBuf, oClipboard, oText;
 
-	oClipboard = g_dialog.checkClipboard.checked;
+	oClipboard = g_dialog.textOutput.checkClipboard.checked;
 	oText = g_dialog.radioText.checked;
 
 	// Set up some details for later
@@ -612,8 +620,13 @@ function scoreBUC() {
 	// Be explicit: we want C Major/A Minor (0 flats/sharps) in key sig.
 	score.keysig = 0;
 
-	// create two staff piano part, sadly the format for bells isn't what we'd like
-	score.appendPart("Piano");
+
+	// create two staff piano part, or the "." instrument for BUCs
+	if(g_settings.value("UseDotInstrument", false)) {
+		score.appendPart(".");	
+	} else {
+		score.appendPart("Piano");
+	}
 	score.appendMeasures(1);
 	cursor = new Cursor(score);
 
