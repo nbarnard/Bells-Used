@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Bells Used Chart Preferences</string>
+   <string>Bells Used Chart Plugin Preferences</string>
   </property>
   <widget class="QCheckBox" name="checkBlankInstrument">
    <property name="geometry">
@@ -22,34 +22,43 @@
      <height>20</height>
     </rect>
    </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Uses a custom instrument with a blank name, instead of piano when creating a Bells Used Chart Score.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
    <property name="text">
     <string>Use Blank Name Instrument</string>
-   </property>
-  </widget>
-  <widget class="QCheckBox" name="checkBypassDialog">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>40</y>
-     <width>172</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Save Last Used Options</string>
    </property>
   </widget>
   <widget class="QCheckBox" name="checkCacheSettings">
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>66</y>
-     <width>113</width>
+     <y>40</y>
+     <width>221</width>
      <height>20</height>
     </rect>
    </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Saves the last output options used.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
    <property name="text">
-    <string>Bypass Dialog</string>
+    <string>Save Last Used Output Options</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="checkBypassDialog">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>66</y>
+     <width>221</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Does not display the output options dialog, instead generates a Bells Used Chart based on the previous options selected.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+   <property name="text">
+    <string>Bypass Output Options Dialog</string>
    </property>
   </widget>
   <widget class="QPushButton" name="buttonStaticDefaults">
