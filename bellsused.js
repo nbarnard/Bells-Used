@@ -47,10 +47,10 @@ function bellsUsed(){
 
 	loadPresetUIOptions();
 
-	if(g_settings.value("showDialog", true)) {
-		displayUIOptions();
-	} else {
+	if(g_settings.value("bypassDialog", false)) {
 		processUIOptions();
+	} else {
+		displayUIOptions();
 	}
 }
 
@@ -59,7 +59,7 @@ function loadPresetUIOptions() {
 	// Get Settings and populate the form
 	g_settings = new QSettings(QSettings.NativeFormat, QSettings.UserScope, "MusE", "pluginBellsUsed", null);
 
-	g_UIOptions.radioScore.checked = g_settings.value("Score", false);
+	g_UIOptions.radioScore.checked = g_settings.value("Score", true);
 	g_UIOptions.radioText.checked = g_settings.value("Text", false);
 	g_UIOptions.radioCSV.checked = g_settings.value("CSV", false); 
 	g_UIOptions.textOutput.checkClipboard.checked = g_settings.value("Clipboard", false); 
