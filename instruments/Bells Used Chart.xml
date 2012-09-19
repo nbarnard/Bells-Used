@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<museScore version="1.0">
+
+  <instrument-group name="Bells Used Chart" extended="1">
+   <instrument>
+          <name>⁠</name>
+        <short-name>⁠</short-name>
+        <staves>2</staves>
+        <clef staff="1">0</clef>
+        <clef staff="2">4</clef>
+        <bracket>1</bracket>
+        <aPitchRange>21-108</aPitchRange>
+        <pPitchRange>21-108</pPitchRange>
+        <channel>
+           <program>0</program>
+           </channel>
+        </instrument>
+  </instrument-group>
+
+  </museScore>
+

@@ -1,7 +1,7 @@
 //=============================================================================
 //  MuseScore
 //
-//  Bells Used Plugin v 1.0  
+//  Bells Used Chart Plugin v 1.0  
 //
 //  Copyright (C)2012 Nicholas Barnard
 //  Portions Copyright (C)2011 Mike Magatagan
@@ -23,8 +23,8 @@
 // This is ECMAScript code (ECMA-262 aka "Java Script")
 //
 var g_pitch = []; // Pitch array
-var g_dialog; // for dialog boxes
-var g_settings; // for settings
+var g_settings, g_UIMessage, g_UIOptions; 
+
 
 // A blank function, since we don't need to run when MuseScore loads or closes, only when we're called.
 function GNDN() {}
@@ -35,7 +35,7 @@ function bellsUsed(){
 
 	// We need to use typeof here instead of directly checking for undefined as the variable doesn't exist until a score is opened.
 	if (typeof curScore === 'undefined') {
-		QMessageBox.critical(g_dialog, "Feedback", "Please Open or Select a Score from which to Create a Bells Used.");
+		QMessageBox.warning(g_UIMessage, "Warning", "Please Open or Select a Score from which to Create a Bells Used Chart.");
 		return;
 	}
 	
@@ -43,81 +43,90 @@ function bellsUsed(){
 	loader = new QUiLoader(null);
 	file = new QFile(pluginPath + "/bellsused.ui");
 	file.open(QIODevice.OpenMode(QIODevice.ReadOnly, QIODevice.Text));
-	g_dialog = loader.load(file, null);
+	g_UIOptions = loader.load(file, null);
 
-	// Get Settings and populate the form
-	g_settings = new QSettings(QSettings.NativeFormat, QSettings.UserScope, "MusE", "pluginBellsUsed", null);
-
-	g_dialog.radioScore.checked = g_settings.value("Score", false);
-	g_dialog.radioText.checked = g_settings.value("Text", false);
-	g_dialog.radioCSV.checked = g_settings.value("CSV", false); 
-	g_dialog.textOutput.checkClipboard.checked = g_settings.value("Clipboard", false); 
-	g_dialog.textOutput.checkUseRealSharpFlat.checked =  g_settings.value("UseRealSharpFlat", true); 
-	g_dialog.checkCSVHeader.checked = g_settings.value("CSVHeader", true); 
+	loadPresetUIOptions();
 
 	if(g_settings.value("showDialog", true)) {
-		displayDialog();
+		displayUIOptions();
 	} else {
-		processForm();
+		processUIOptions();
 	}
 }
 
+// Loads settings into UI
+function loadPresetUIOptions() {
+	// Get Settings and populate the form
+	g_settings = new QSettings(QSettings.NativeFormat, QSettings.UserScope, "MusE", "pluginBellsUsed", null);
+
+	g_UIOptions.radioScore.checked = g_settings.value("Score", false);
+	g_UIOptions.radioText.checked = g_settings.value("Text", false);
+	g_UIOptions.radioCSV.checked = g_settings.value("CSV", false); 
+	g_UIOptions.textOutput.checkClipboard.checked = g_settings.value("Clipboard", false); 
+	g_UIOptions.textOutput.checkUseRealSharpFlat.checked =  g_settings.value("UseRealSharpFlat", true); 
+	g_UIOptions.checkCSVHeader.checked = g_settings.value("CSVHeader", true); 
+}
+
 // Display Dialog
-function displayDialog() {
+function displayUIOptions() {
 	// connect signals
-	g_dialog.buttonBox.accepted.connect(processForm);
-	g_dialog.radioScore.toggled.connect(changedRadio);
-	g_dialog.radioText.toggled.connect(changedRadio);
-	g_dialog.radioCSV.toggled.connect(changedRadio);
+	g_UIOptions.buttonBox.accepted.connect(processUIOptions);
+	g_UIOptions.radioScore.toggled.connect(changedRadio);
+	g_UIOptions.radioText.toggled.connect(changedRadio);
+	g_UIOptions.radioCSV.toggled.connect(changedRadio);
 
 	// Call Changed Radio to Set visible items properly.
 	changedRadio();
 
-	g_dialog.show();
+	g_UIOptions.show();
 }
 
 // Adjust the visible elements on the form per the current checked radio button.
 function changedRadio() {
-	if (g_dialog.radioText.checked) {
-		g_dialog.textOutput.enabled = true;
-		g_dialog.checkCSVHeader.visible = false;
+	if (g_UIOptions.radioText.checked) {
+		g_UIOptions.textOutput.enabled = true;
+		g_UIOptions.checkCSVHeader.visible = false;
 		return;
 	} 
-	if (g_dialog.radioCSV.checked) {
-		g_dialog.textOutput.enabled = true;
-		g_dialog.checkCSVHeader.visible = true;
+	if (g_UIOptions.radioCSV.checked) {
+		g_UIOptions.textOutput.enabled = true;
+		g_UIOptions.checkCSVHeader.visible = true;
 		return;
 	}
 	
 	// No radio is selected, or radioScore is selected.
-	g_dialog.textOutput.enabled = false;
-	g_dialog.checkCSVHeader.visible = false;
+	g_UIOptions.textOutput.enabled = false;
+	g_UIOptions.checkCSVHeader.visible = false;
 	return;
 		
 }
 
-// Process the Form
-function processForm() {
-	// Save the settings if requested.
-	if(g_settings.value("cacheSettings", true)) {
-		g_settings.setValue("Score", g_dialog.radioScore.checked);
-		g_settings.setValue("Text", g_dialog.radioText.checked);
-		g_settings.setValue("CSV", g_dialog.radioCSV.checked);
-		g_settings.setValue("Clipboard", g_dialog.textOutput.checkClipboard.checked);
-		g_settings.setValue("UseRealSharpFlat", g_dialog.textOutput.checkUseRealSharpFlat.checked); 
-		g_settings.setValue("CSVHeader", g_dialog.checkCSVHeader.checked);
+function saveUIOptionsSettings() {
+		g_settings.setValue("Score", g_UIOptions.radioScore.checked);
+		g_settings.setValue("Text", g_UIOptions.radioText.checked);
+		g_settings.setValue("CSV", g_UIOptions.radioCSV.checked);
+		g_settings.setValue("Clipboard", g_UIOptions.textOutput.checkClipboard.checked);
+		g_settings.setValue("UseRealSharpFlat", g_UIOptions.textOutput.checkUseRealSharpFlat.checked); 
+		g_settings.setValue("CSVHeader", g_UIOptions.checkCSVHeader.checked);
 	
 		// Save to disk
 		g_settings.sync(); 
+}
+
+// Process the Form
+function processUIOptions() {
+	// Save the settings if requested.
+	if(g_settings.value("cacheSettings", true)) {
+		saveUIOptionsSettings();
 	}
 
 	// Gather the Used Pitches
 	populatePitches();
 
-	if (g_dialog.radioScore.checked) {
+	if (g_UIOptions.radioScore.checked) {
 		scoreBUC();
 	}
-	if (g_dialog.radioText.checked || g_dialog.radioCSV.checked) {
+	if (g_UIOptions.radioText.checked || g_UIOptions.radioCSV.checked) {
 		textBUC();
 	}
 }
@@ -247,7 +256,7 @@ function textBUC() {
 		var notes = ["C", "G", "D", "A", "E", "B", "F"],
 			accidental, accsymbols;
 			
-			if(g_dialog.textOutput.checkUseRealSharpFlat.checked) {
+			if(g_UIOptions.textOutput.checkUseRealSharpFlat.checked) {
 				accsymbols = ["\uD834\uDD2B", "\u266D", "", "\u266F", "\uD834\uDD2A"];
 			} else {
 				accsymbols = ["bb", "b", "", "#", "##"];
@@ -274,9 +283,9 @@ function textBUC() {
 		if (!oClipboard) {
 			// Open a file selection dialog
 			if (oText) {
-				fName = QFileDialog.getSaveFileName(g_dialog, "Bells Used: Save Text Bells Used", "", "TXT file (*.txt)", 0);
+				fName = QFileDialog.getSaveFileName(g_UIMessage, "Bells Used: Save Text Bells Used", "", "TXT file (*.txt)", 0);
 			} else {
-				fName = QFileDialog.getSaveFileName(g_dialog, "Bells Used: Save CSV Bells Used", "", "CSV file (*.csv)", 0);
+				fName = QFileDialog.getSaveFileName(g_UIMessage, "Bells Used: Save CSV Bells Used", "", "CSV file (*.csv)", 0);
 			}
 
 			if (fName === null || fName === "") {
@@ -289,7 +298,7 @@ function textBUC() {
 				file.remove();
 			}
 			if (!file.open(QIODevice.ReadWrite)) {
-				QMessageBox.critical(g_dialog, "File Error", "Could not create output file " + fName);
+				QMessageBox.critical(g_UIMessage, "File Error", "Could not create output file " + fName);
 				return false;
 			}
 			textStream = new QTextStream(file);
@@ -315,7 +324,7 @@ function textBUC() {
 			file.close();
 		} else {
 			QApplication.clipboard().setText(clipboardBuf, 0);
-			QMessageBox.information(g_dialog, "Complete", "Bells Used on Clipboard");
+			QMessageBox.information(g_UIMessage, "Complete", "Bells Used on Clipboard");
 		}
 		return;
 	}
@@ -327,8 +336,8 @@ function textBUC() {
 		NumAccidentalsUsed = 0,
 		title, composer, clipboardBuf, oClipboard, oText;
 
-	oClipboard = g_dialog.textOutput.checkClipboard.checked;
-	oText = g_dialog.radioText.checked;
+	oClipboard = g_UIOptions.textOutput.checkClipboard.checked;
+	oText = g_UIOptions.radioText.checked;
 
 	// Set up some details for later
 	title = curScore.title;
@@ -354,7 +363,7 @@ function textBUC() {
 		}
 		writeOutput(":\r\n");
 	} else {
-		if (g_dialog.checkCSVHeader.checked) {
+		if (g_UIOptions.checkCSVHeader.checked) {
 			// Write out all the header including all the notes in order
 			writeOutput("Title,Composer,Low Pitch,High Pitch,Octaves Used,");
 
@@ -620,13 +629,25 @@ function scoreBUC() {
 	// Be explicit: we want C Major/A Minor (0 flats/sharps) in key sig.
 	score.keysig = 0;
 
-
-	// create two staff piano part, or the "." instrument for BUCs
-	if(g_settings.value("UseDotInstrument", false)) {
-		score.appendPart(".");	
+	// create two staff piano part, or the "Blank" instrument for BUCs
+	if(g_settings.value("UseBlankInstrument", false)) {
+		score.appendPart("\u2060");	
 	} else {
 		score.appendPart("Piano");
 	}
+	
+	// If Musescore doesn't recognize the instrument, it'll put a default instrument with only one staff.
+	if(score.staves !== 2) {
+		QMessageBox.critical(g_UIMessage, "Instrument Not Installed", 
+		"The Blank Name Instrument is not installed, although the option for the using the Blank Name Instrument is selected. <br /><br />This option has been disabled. Please try to create your Bells Used Chart again.");
+		
+		g_settings.setValue("UseBlankInstrument", false);
+		g_settings.sync(); 
+				
+		score.close();
+		return false;
+	}
+	
 	score.appendMeasures(1);
 	cursor = new Cursor(score);
 
@@ -654,12 +675,11 @@ function scoreBUC() {
 		addEndNote();
 	}
 
-	// by ending the "undo" it'll display the score.
+	// by ending the "undo" MuseScore will display the score.
 	score.endUndo();
 
 	return;
 }
-
 
 // See if an array contains an object from http://stackoverflow.com/questions/237104/array-containsobj-in-javascript
 function contains(a, obj) {
@@ -672,13 +692,14 @@ function contains(a, obj) {
 	return false;
 }
 
+
 // Defines how MuseScore interacts with this plugin
-var bellsusedPlugin = {
+var bellsUsed = {
 	majorVersion: 1,
 	minorVersion: 1,
-	menu: 'Plugins.Bells Used',
+	menu: 'Plugins.Bells Used.Generate Bells Used Chart',
 	init: GNDN,
 	run: bellsUsed
 };
 
-bellsusedPlugin;
+bellsUsed;
