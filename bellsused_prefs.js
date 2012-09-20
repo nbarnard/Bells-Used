@@ -34,6 +34,24 @@ function checkBlankInstrumentModal() {
 	}
 }
 
+// Were passing through this because QT on Windows stores true/false as strings. sigh.
+function getSetting(key, fallback) {
+	var temp;
+	
+	temp = g_settings.value(key, fallback);
+	
+	if(typeof temp !== 'string') {
+		return temp;
+	}
+
+	if(temp === 'true') {
+		return true;
+	} else {
+		return false;
+	}
+
+}
+
 function showPreferences() {
 	var loader, file;
 
@@ -49,9 +67,9 @@ function showPreferences() {
 	g_UIPrefs = loader.load(file, null);
 
 	g_settings = new QSettings(QSettings.NativeFormat, QSettings.UserScope, "MusE", "pluginBellsUsed", null);
-	g_UIPrefs.checkBlankInstrument.checked = g_settings.value("UseBlankInstrument", false);
-	g_UIPrefs.checkCacheSettings.checked = g_settings.value("cacheSettings", true);
-	g_UIPrefs.checkBypassDialog.checked = g_settings.value("bypassDialog", false);
+	g_UIPrefs.checkBlankInstrument.checked = getSetting("UseBlankInstrument", false);
+	g_UIPrefs.checkCacheSettings.checked = getSetting("cacheSettings", true);
+	g_UIPrefs.checkBypassDialog.checked = getSetting("bypassDialog", false);
 
 	// Connect Slots
 	g_UIPrefs.checkBlankInstrument.toggled.connect(checkBlankInstrumentModal);
@@ -76,12 +94,12 @@ function loadPresetUIOptions() {
 	// Get Settings and populate the form
 	g_settings = new QSettings(QSettings.NativeFormat, QSettings.UserScope, "MusE", "pluginBellsUsed", null);
 
-	g_UIOptions.radioScore.checked = g_settings.value("Score", true);
-	g_UIOptions.radioText.checked = g_settings.value("Text", false);
-	g_UIOptions.radioCSV.checked = g_settings.value("CSV", false);
-	g_UIOptions.textOutput.checkClipboard.checked = g_settings.value("Clipboard", false);
-	g_UIOptions.textOutput.checkUseRealSharpFlat.checked = g_settings.value("UseRealSharpFlat", true);
-	g_UIOptions.checkCSVHeader.checked = g_settings.value("CSVHeader", true);
+	g_UIOptions.radioScore.checked = getSetting("Score", true);
+	g_UIOptions.radioText.checked = getSetting("Text", false);
+	g_UIOptions.radioCSV.checked = getSetting("CSV", false);
+	g_UIOptions.textOutput.checkClipboard.checked = getSetting("Clipboard", false);
+	g_UIOptions.textOutput.checkUseRealSharpFlat.checked = getSetting("UseRealSharpFlat", true);
+	g_UIOptions.checkCSVHeader.checked = getSetting("CSVHeader", true);
 }
 
 function displayStaticDefaults() {

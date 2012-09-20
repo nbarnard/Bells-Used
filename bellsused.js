@@ -23,14 +23,16 @@
 // This is ECMAScript code (ECMA-262 aka "Java Script")
 //
 var g_pitch = []; // Pitch array
-var g_settings, g_UIMessage, g_UIOptions; 
+var g_settings, g_UIMessage, g_UIOptions;
 
 
 // A blank function, since we don't need to run when MuseScore loads or closes, only when we're called.
+
 function GNDN() {}
 
 // Initializes BellsUsed 
-function bellsUsed(){
+
+function bellsUsed() {
 	var loader, file;
 
 	// We need to use typeof here instead of directly checking for undefined as the variable doesn't exist until a score is opened.
@@ -38,7 +40,7 @@ function bellsUsed(){
 		QMessageBox.warning(g_UIMessage, "Warning", "Please Open or Select a Score from which to Create a Bells Used Chart.");
 		return;
 	}
-	
+
 	// Load the form so we can populate it.
 	loader = new QUiLoader(null);
 	file = new QFile(pluginPath + "/bellsused.ui");
@@ -47,27 +49,48 @@ function bellsUsed(){
 
 	loadPresetUIOptions();
 
-	if(g_settings.value("bypassDialog", false)) {
+	if (getSetting("bypassDialog", false)) {
 		processUIOptions();
 	} else {
 		displayUIOptions();
 	}
 }
 
+// Were passing through this because QT on Windows stores true/false as strings. sigh.
+
+function getSetting(key, fallback) {
+	var temp;
+
+	temp = g_settings.value(key, fallback);
+
+	if (typeof temp !== 'string') {
+		return temp;
+	}
+
+	if (temp === 'true') {
+		return true;
+	} else {
+		return false;
+	}
+
+}
+
 // Loads settings into UI
+
 function loadPresetUIOptions() {
 	// Get Settings and populate the form
 	g_settings = new QSettings(QSettings.NativeFormat, QSettings.UserScope, "MusE", "pluginBellsUsed", null);
 
-	g_UIOptions.radioScore.checked = g_settings.value("Score", true);
-	g_UIOptions.radioText.checked = g_settings.value("Text", false);
-	g_UIOptions.radioCSV.checked = g_settings.value("CSV", false); 
-	g_UIOptions.textOutput.checkClipboard.checked = g_settings.value("Clipboard", false); 
-	g_UIOptions.textOutput.checkUseRealSharpFlat.checked =  g_settings.value("UseRealSharpFlat", true); 
-	g_UIOptions.checkCSVHeader.checked = g_settings.value("CSVHeader", true); 
+	g_UIOptions.radioScore.checked = getSetting("Score", true);
+	g_UIOptions.radioText.checked = getSetting("Text", false);
+	g_UIOptions.radioCSV.checked = getSetting("CSV", false);
+	g_UIOptions.textOutput.checkClipboard.checked = getSetting("Clipboard", false);
+	g_UIOptions.textOutput.checkUseRealSharpFlat.checked = getSetting("UseRealSharpFlat", true);
+	g_UIOptions.checkCSVHeader.checked = getSetting("CSVHeader", true);
 }
 
 // Display Dialog
+
 function displayUIOptions() {
 	// connect signals
 	g_UIOptions.buttonBox.accepted.connect(processUIOptions);
@@ -82,41 +105,43 @@ function displayUIOptions() {
 }
 
 // Adjust the visible elements on the form per the current checked radio button.
+
 function changedRadio() {
 	if (g_UIOptions.radioText.checked) {
 		g_UIOptions.textOutput.enabled = true;
 		g_UIOptions.checkCSVHeader.visible = false;
 		return;
-	} 
+	}
 	if (g_UIOptions.radioCSV.checked) {
 		g_UIOptions.textOutput.enabled = true;
 		g_UIOptions.checkCSVHeader.visible = true;
 		return;
 	}
-	
+
 	// No radio is selected, or radioScore is selected.
 	g_UIOptions.textOutput.enabled = false;
 	g_UIOptions.checkCSVHeader.visible = false;
 	return;
-		
+
 }
 
 function saveUIOptionsSettings() {
-		g_settings.setValue("Score", g_UIOptions.radioScore.checked);
-		g_settings.setValue("Text", g_UIOptions.radioText.checked);
-		g_settings.setValue("CSV", g_UIOptions.radioCSV.checked);
-		g_settings.setValue("Clipboard", g_UIOptions.textOutput.checkClipboard.checked);
-		g_settings.setValue("UseRealSharpFlat", g_UIOptions.textOutput.checkUseRealSharpFlat.checked); 
-		g_settings.setValue("CSVHeader", g_UIOptions.checkCSVHeader.checked);
-	
-		// Save to disk
-		g_settings.sync(); 
+	g_settings.setValue("Score", g_UIOptions.radioScore.checked);
+	g_settings.setValue("Text", g_UIOptions.radioText.checked);
+	g_settings.setValue("CSV", g_UIOptions.radioCSV.checked);
+	g_settings.setValue("Clipboard", g_UIOptions.textOutput.checkClipboard.checked);
+	g_settings.setValue("UseRealSharpFlat", g_UIOptions.textOutput.checkUseRealSharpFlat.checked);
+	g_settings.setValue("CSVHeader", g_UIOptions.checkCSVHeader.checked);
+
+	// Save to disk
+	g_settings.sync();
 }
 
 // Process the Form
+
 function processUIOptions() {
 	// Save the settings if requested.
-	if(g_settings.value("cacheSettings", true)) {
+	if (getSetting("cacheSettings", true)) {
 		saveUIOptionsSettings();
 	}
 
@@ -132,8 +157,10 @@ function processUIOptions() {
 }
 
 // Goes through the whole score Chord by Chord and populates the notes used into Pitch Array.
+
 function populatePitches() {
 	// Blank Pitch Object
+
 	function BlankPitch() {
 		this.used = false;
 		this.enharmonic = [];
@@ -190,8 +217,10 @@ function populatePitches() {
 }
 
 // Generates Text Based BUCs
+
 function textBUC() {
 	// Return the highest pitch.
+
 	function findHighPitch() {
 		var x;
 		for (x = 126; !g_pitch[x].used; x--) {}
@@ -201,6 +230,7 @@ function textBUC() {
 	}
 
 	// Return the lowest pitch.
+
 	function findLowPitch() {
 		var x;
 		for (x = 0; !g_pitch[x].used; x++) {}
@@ -210,6 +240,7 @@ function textBUC() {
 	}
 
 	// Returns True if the primary representation of this note is an acidental 
+
 	function onlyAccidentalRep(enharmonic) {
 		// These are enharmonics that can only be expressed as a sharp or flat
 		var OnlyAccidental = [-1, 0, 8, 9, 10, 11, 12, 20, 21, 22, 23, 24, 32, 33];
@@ -219,6 +250,7 @@ function textBUC() {
 
 	// Returns the primary enharmonic given a pitch. 
 	// Primary Enharmonic is the Natural or Sharp representation of a note
+
 	function primaryEnharmonicRep(pitch) {
 		// This the order of enharmonics e.g. 14=C, 21=C#, etc.
 		var EnharmonicOrder = [14, 21, 16, 23, 18, 13, 20, 15, 22, 17, 24, 19];
@@ -228,6 +260,7 @@ function textBUC() {
 
 	// Sorts enharmonics from most preferred to least preferred.
 	// We prefer a natural to any accidental, and a single accidental to a double accidental.
+
 	function sortenharmonics(a, b) {
 		// Primary representation of notes are between 13 and 24. If a or b is in that range it should be first.
 		if ((a >= 13) && (a <= 24)) {
@@ -250,18 +283,19 @@ function textBUC() {
 		// Although in practice we shouldn't get two values that could be considered equal, just in case we somehow did.
 		return 0;
 	}
-	
+
 	// Return the note name
+
 	function noteName(pitch, enharmonic) {
 		var notes = ["C", "G", "D", "A", "E", "B", "F"],
 			accidental, accsymbols;
-			
-			if(g_UIOptions.textOutput.checkUseRealSharpFlat.checked) {
-				accsymbols = ["\uD834\uDD2B", "\u266D", "", "\u266F", "\uD834\uDD2A"];
-			} else {
-				accsymbols = ["bb", "b", "", "#", "##"];
-			}
-			
+
+		if (g_UIOptions.textOutput.checkUseRealSharpFlat.checked) {
+			accsymbols = ["\uD834\uDD2B", "\u266D", "", "\u266F", "\uD834\uDD2A"];
+		} else {
+			accsymbols = ["bb", "b", "", "#", "##"];
+		}
+
 		// find and assign the proper accidental		
 		accidental = enharmonic < 6 ? 0 : enharmonic < 13 ? 1 : enharmonic < 20 ? 2 : enharmonic < 27 ? 3 : 4;
 
@@ -271,6 +305,7 @@ function textBUC() {
 	}
 
 	// Given a pitch, return what octave it is in.
+
 	function findOctave(pitch) {
 		// Find the proper octave and return it. Despite this looking odd a case/switch wouldn't work here
 		// And thanks to Ben its so much cleaner than a series of If/Else statements
@@ -279,6 +314,7 @@ function textBUC() {
 	}
 
 	// Start the output. 
+
 	function startOutput() {
 		if (!oClipboard) {
 			// Open a file selection dialog
@@ -310,6 +346,7 @@ function textBUC() {
 	}
 
 	// Add to our output
+
 	function writeOutput(buf) {
 		if (!oClipboard) {
 			textStream.writeString(buf);
@@ -319,6 +356,7 @@ function textBUC() {
 	}
 
 	// Close our output.
+
 	function endOutput() {
 		if (!oClipboard) {
 			file.close();
@@ -448,6 +486,7 @@ function textBUC() {
 }
 
 // Generates Score BUC
+
 function scoreBUC() {
 	var notesInRange = function(x) {
 		if (g_pitch[x].used) {
@@ -455,14 +494,15 @@ function scoreBUC() {
 		}
 	};
 
-	var processPitch = function(pitch) {
+
+	var processPitch = function(pitch, writeSplitFlats) {
 		var x, numEnharmonics;
 
 		numEnharmonics = g_pitch[pitch].enharmonic.length;
 
 		// if the pitch isn't used do nothing.
 		if (!g_pitch[pitch].used) {
-			return false;
+			return;
 		}
 
 		// Sort the enharmonics from greatest to least
@@ -471,10 +511,17 @@ function scoreBUC() {
 			return b - a;
 		});
 
-		for (x = 0; x < numEnharmonics; x++) {
-			// Create the Chord Length
-			chord = new Chord();
-			chord.tickLen = 480;
+		if (writeSplitFlats) {
+			x = numEnharmonics - countFlats(g_pitch[pitch].enharmonic);
+		} else {
+			x = 0;
+		}
+
+		while (x < numEnharmonics) {
+			// If we're on a flat enharmonic and we're on the clefsplit, don't put the note here, unless we're specifically writing the flats
+			if (!writeSplitFlats && pitch === clefsplit && isFlat(g_pitch[pitch].enharmonic[x])) {
+				return;
+			}
 
 			// Add the pitch to the Chord.
 			note = new Note();
@@ -489,35 +536,37 @@ function scoreBUC() {
 
 			// Check if the previously printed note has the same root pitch and octave, but a flat in front of it.
 			// If so print the previous note again, so we don't get unwanted natural symbol. - Issue #6
-			if (pitch !== 0 && lastnote.pitch !== 0 && (pitch - 1 === lastnote.pitch) && isFlat(lastnote.tpc) && (rootNote(lastnote.tpc) === rootNote(note.tpc))) {
+			if (pitch !== 0 && lastnote.pitch !== 0 && (pitch - 1 === lastnote.pitch) && isFlat(lastnote.tpc) && (noteRoot(lastnote.tpc) === noteRoot(note.tpc))) {
 				note.pitch = lastnote.pitch;
 				note.tpc = lastnote.tpc;
 			}
+
+			addNote(note);
+
+			lastnote.pitch = pitch;
+			lastnote.tpc = note.tpc;
+
+			cursor.next();
+
+			x++;
+		}
+
+		return;
+
+		function addNote(note) {
+			chord = new Chord();
+			chord.tickLen = 480;
 
 			chord.addNote(note);
 			cursor.add(chord);
 
 			chord = cursor.chord();
 			chord.noStem = true;
-
-			cursor.next();
-
-		}
-
-		lastnote.pitch = pitch;
-		lastnote.tpc = lastTPC(pitch);
-
-		return true;
-
-		// Returns true if tpc represents is a flat or double flat.
-
-		function isFlat(tpc) {
-			return tpc < 13;
 		}
 
 		// Root Note
 
-		function rootNote(tpc) {
+		function noteRoot(tpc) {
 			return tpc % 7;
 		}
 
@@ -527,15 +576,16 @@ function scoreBUC() {
 			return tpc < 13 || tpc > 24;
 		}
 
-		// Is tpc something other that tertiary or is something other than Ab which is secondary without a tertiary representation.
+		// Is tpc something other that tertiary
+
 		function notTertiary(tpc) {
 			return tpc > 5 && tpc < 30;
 		}
 
 	};
 
+	// Return the last TPC in an enharmonic array. Assumes the array is already sorted.
 
-	// Return the TPC last printed TPC. Assumes enharmonic array is sorted greatest to least.
 	function lastTPC(pitch) {
 		var lastenharmonic;
 
@@ -544,11 +594,19 @@ function scoreBUC() {
 		return g_pitch[pitch].enharmonic[lastenharmonic];
 	}
 
-	function addEndNote() {
-		chord = new Chord();
-		// Figure out the length of the hidden note.
-		chord.tickLen = Math.abs(basslen - treblelen) * 480;
+	// Returns true if tpc is not a flat
 
+	function notFlat(tpc) {
+		return tpc > 12;
+	}
+
+	// Returns true if tpc represents is a flat or double flat.
+
+	function isFlat(tpc) {
+		return tpc < 13;
+	}
+
+	function addEndNote() {
 		// Make the note as the same pitch and enharmonic as the previous note.
 		note = new Note();
 		note.pitch = lastnote.pitch;
@@ -556,17 +614,34 @@ function scoreBUC() {
 
 		note.visible = false;
 
+		chord = new Chord();
+		// Figure out the length of the hidden note.
+		chord.tickLen = Math.abs(basslen - treblelen) * 480;
+
 		chord.addNote(note);
 		cursor.add(chord);
+	}
 
-		chord = cursor.chord();
-		chord.noStem = true;
+	function countFlats(enharmonic) {
+		var x, flats = 0;
+
+		for (x = 0; x < enharmonic.length; x++) {
+			if (isFlat(enharmonic[x])) {
+				flats++;
+			}
+		}
+
+		return flats;
+
 	}
 
 	function notesInTreble() {
 		usedpitches = 0;
 
 		walkTreble(notesInRange);
+
+		// Add the flats in the split point to the treble as they'll be displayed with their associated natural
+		usedpitches = usedpitches + countFlats(g_pitch[clefsplit].enharmonic);
 
 		return usedpitches;
 	}
@@ -576,29 +651,37 @@ function scoreBUC() {
 
 		walkBass(notesInRange);
 
+		// Remove flats in the split point from the bass as they'll be displayed with their associated natural in the treble.
+		usedpitches = usedpitches - countFlats(g_pitch[clefsplit].enharmonic);
+
 		return usedpitches;
 	}
 
 	// Walks the Treble clef and passes our current position to function fnc.
+
 	function walkTreble(fnc) {
 		var x;
 
-		for (x = 62; x <= 126; x++) {
+		for (x = clefsplit + 1; x <= 126; x++) {
 			fnc(x);
 		}
 	}
 
 	// Walks the Bass clef and passes our current position to function fnc.
+
 	function walkBass(fnc) {
 		var x;
 
-		for (x = 0; x <= 61; x++) {
+		for (x = 0; x <= clefsplit; x++) {
 			fnc(x);
 		}
 	}
 
 	// Beginning of scoreBUC
-	var title, composer, measurelen, idx, score, cursor, lastnote, basslen, treblelen, chord, note, usedpitches;
+	var title, composer, measurelen, idx, score, cursor, lastnote, basslen, treblelen, chord, note, usedpitches, clefsplit;
+
+	// The tone where the split between the treble and the bass clef is. Any Flat TPCs will go in the treble, naturals and sharps in the bass
+	clefsplit = 61;
 
 	// Set up some details for later
 	title = curScore.title;
@@ -626,24 +709,23 @@ function scoreBUC() {
 	score.keysig = 0;
 
 	// create two staff piano part, or the "Blank" instrument for BUCs
-	if(g_settings.value("UseBlankInstrument", false)) {
-		score.appendPart("\u2060");	
+	if (getSetting("UseBlankInstrument", false)) {
+		score.appendPart("\u2060");
 	} else {
 		score.appendPart("Piano");
 	}
-	
+
 	// If Musescore doesn't recognize the instrument, it'll put a default instrument with only one staff.
-	if(score.staves !== 2) {
-		QMessageBox.critical(g_UIMessage, "Instrument Not Installed", 
-		"The Blank Name Instrument is not installed, although the option for the using the Blank Name Instrument is selected. <br /><br />This option has been disabled. Please try to create your Bells Used Chart again.");
-		
+	if (score.staves !== 2) {
+		QMessageBox.critical(g_UIMessage, "Instrument Not Installed", "The Blank Name Instrument is not installed, although the option for the using the Blank Name Instrument is selected. <br /><br />This option has been disabled. Please try to create your Bells Used Chart again.");
+
 		g_settings.setValue("UseBlankInstrument", false);
-		g_settings.sync(); 
-				
+		g_settings.sync();
+
 		score.close();
 		return false;
 	}
-	
+
 	score.appendMeasures(1);
 	cursor = new Cursor(score);
 
@@ -652,19 +734,29 @@ function scoreBUC() {
 	cursor.voice = 0;
 	cursor.rewind();
 
-	walkBass(processPitch);
+	walkBass(function(x) {
+		processPitch(x, false)
+	});
 
 	// If we have fewer bass notes than treble notes add a hidden padding note.
 	if (basslen < treblelen) {
 		addEndNote();
 	}
 
+
 	// Treble Clef
 	cursor.staff = 0;
 	cursor.voice = 0;
 	cursor.rewind();
 
-	walkTreble(processPitch);
+	if (lastnote.tpc !== lastTPC(lastnote.pitch)) {
+		processPitch(lastnote.pitch, true);
+	}
+
+
+	walkTreble(function(x) {
+		processPitch(x, false)
+	});
 
 	// If we have fewer treble notes than bass notes add a hidden padding note.
 	if (treblelen < basslen) {
@@ -678,6 +770,7 @@ function scoreBUC() {
 }
 
 // See if an array contains an object from http://stackoverflow.com/questions/237104/array-containsobj-in-javascript
+
 function contains(a, obj) {
 	var i;
 	for (i = 0; i < a.length; i++) {
