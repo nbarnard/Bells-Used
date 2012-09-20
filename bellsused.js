@@ -481,20 +481,17 @@ function scoreBUC() {
 			note.pitch = pitch;
 			note.tpc = g_pitch[pitch].enharmonic[x];
 
+			// Print the right notehead type if there is another enharmonic representing this pitch.
+			// Print an X note head if this isn't the most primary representation of an enharmonic
+			if (notPrimary(note.tpc) && numEnharmonics !== 1 && (numEnharmonics === 3 || notTertiary(note.tpc))) {
+				note.noteHead = 1;
+			}
 
 			// Check if the previously printed note has the same root pitch and octave, but a flat in front of it.
 			// If so print the previous note again, so we don't get unwanted natural symbol. - Issue #6
-
 			if (pitch !== 0 && lastnote.pitch !== 0 && (pitch - 1 === lastnote.pitch) && isFlat(lastnote.tpc) && (rootNote(lastnote.tpc) === rootNote(note.tpc))) {
 				note.pitch = lastnote.pitch;
 				note.tpc = lastnote.tpc;
-			}
-
-			// Print the right notehead type if there is another enharmonic representing this pitch.
-			// Print an X note head if this isn't the most primary representation of an enharmonic
-
-			if (notPrimary(note.tpc) && numEnharmonics !== 1 && (numEnharmonics === 3 || isTertiary(note.tpc))) {
-				note.noteHead = 1;
 			}
 
 			chord.addNote(note);
@@ -530,10 +527,9 @@ function scoreBUC() {
 			return tpc < 13 || tpc > 24;
 		}
 
-		// Is tpc tertiary? (or is it Ab which is secondary without a tertiary representation.)
-
-		function isTertiary(tpc) {
-			return tpc < 6 || tpc > 29 || tpc === 10;
+		// Is tpc something other that tertiary or is something other than Ab which is secondary without a tertiary representation.
+		function notTertiary(tpc) {
+			return tpc > 5 && tpc < 30;
 		}
 
 	};
