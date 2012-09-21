@@ -304,13 +304,9 @@ function textBUC() {
 
 	}
 
-	// Given a pitch, return what octave it is in.
-
+		// Find the proper octave and return it. 
 	function findOctave(pitch) {
-		// Find the proper octave and return it. Despite this looking odd a case/switch wouldn't work here
-		// And thanks to Ben its so much cleaner than a series of If/Else statements
-
-		return pitch < 12 ? 0 : pitch < 24 ? 1 : pitch < 36 ? 2 : pitch < 48 ? 3 : pitch < 60 ? 4 : pitch < 72 ? 5 : pitch < 84 ? 6 : pitch < 96 ? 7 : pitch < 108 ? 8 : pitch < 120 ? 9 : 10;
+		return Math.floor(pitch / 12);
 	}
 
 	// Start the output. 
@@ -541,7 +537,7 @@ function scoreBUC() {
 				note.tpc = lastnote.tpc;
 			}
 
-			addNote(note);
+			addNote(note, 480);
 
 			lastnote.pitch = pitch;
 			lastnote.tpc = note.tpc;
@@ -552,17 +548,6 @@ function scoreBUC() {
 		}
 
 		return;
-
-		function addNote(note) {
-			chord = new Chord();
-			chord.tickLen = 480;
-
-			chord.addNote(note);
-			cursor.add(chord);
-
-			chord = cursor.chord();
-			chord.noStem = true;
-		}
 
 		// Root Note
 
@@ -583,6 +568,20 @@ function scoreBUC() {
 		}
 
 	};
+
+	function addNote(note, tickLen) {
+		chord = new Chord();
+		chord.tickLen = tickLen;
+
+		chord.addNote(note);
+		cursor.add(chord);
+		
+		// Only omit the stem if its a dotted half or shorter.
+		if(tickLen < 1920) {
+			chord = cursor.chord();
+			chord.noStem = true;
+		}
+	}
 
 	// Return the last TPC in an enharmonic array. Assumes the array is already sorted.
 
@@ -607,19 +606,8 @@ function scoreBUC() {
 	}
 
 	function addEndNote() {
-		// Make the note as the same pitch and enharmonic as the previous note.
-		note = new Note();
-		note.pitch = lastnote.pitch;
-		note.tpc = lastnote.tpc;
-
-		note.visible = false;
-
-		chord = new Chord();
-		// Figure out the length of the hidden note.
-		chord.tickLen = Math.abs(basslen - treblelen) * 480;
-
-		chord.addNote(note);
-		cursor.add(chord);
+		// Figure out the length that the last note needs to be, and add it 
+		addNote(lastnote, Math.abs(basslen - treblelen) * 480);
 	}
 
 	function countFlats(enharmonic) {
@@ -694,8 +682,11 @@ function scoreBUC() {
 	// Assign measure length to the larger between the notes in the Bass or treble clef.
 	measurelen = Math.max(basslen, treblelen);
 
-	// The last note written is a Note object. MuseScore sets lastnote.pitch = 0 here.
+	// The last note written is a Note object. MuseScore sets lastnote.pitch = 0 here. 
 	lastnote = new Note();
+	
+	// Set it invisible for the one time we print it.
+	lastnote.visible = false;
 
 	// Create the Score	
 	score = new Score();
