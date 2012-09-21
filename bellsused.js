@@ -392,7 +392,7 @@ function textBUC() {
 	// If we have just the title output it. If we have neither. don't output any of it.
 	// MuseScore returns an empty string instead of undefined, so we test for that.
 	if (oText) {
-		writeOutput("Notes Used");
+		writeOutput("Bells Used");
 		if (title !== "") {
 			writeOutput(" in \"" + title + "\"");
 			if (composer !== "") {
@@ -479,7 +479,7 @@ function textBUC() {
 	}
 
 	if (oText) {
-		writeOutput("\r\n" + ((findOctave(maxPitch) - findOctave(minPitch)) + 1) + " octaves with " + NumBellsUsed + " bells used ranging from " + noteName(minPitch, g_pitch[minPitch].enharmonic[0]) + " to " + noteName(maxPitch, g_pitch[maxPitch].enharmonic[0]) + " with " + NumAccidentalsUsed + " accidentals.\r\n");
+		writeOutput("\r\n" + (findOctave(maxPitch) - findOctave(minPitch)) + " octaves with " + NumBellsUsed + " bells used ranging from " + noteName(minPitch, g_pitch[minPitch].enharmonic[0]) + " to " + noteName(maxPitch, g_pitch[maxPitch].enharmonic[0]) + " with " + NumAccidentalsUsed + " accidentals.\r\n");
 	}
 
 	endOutput();
