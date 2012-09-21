@@ -1,11 +1,11 @@
 //=============================================================================
-//  MuseScore
+//  Bells Used Chart Plugin v1.0
+//  For use with for Musescore v1.2  
 //
-//  Bells Used Chart Plugin v 1.0  
+//  Derived from Mike Magatagan's Count Notes plugin
 //
 //  Copyright (C)2012 Nicholas Barnard
 //  Portions Copyright (C)2011 Mike Magatagan
-//  Derived from Mike Magatagan's Count Notes plugin
 //
 //  This program is free software; you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License version 2.

@@ -1,8 +1,6 @@
 //=============================================================================
-//  MuseScore
-//
-//  Bells Used Chart Plugin v 1.0  
-//  Preferences Plugin  
+//  Bells Used Chart Preferences Plugin v1.0
+//  For use with for Musescore v1.2  
 //
 //  Copyright (C)2012 Nicholas Barnard
 //
@@ -18,39 +16,13 @@
 //  along with this program; if not, write to the Free Software
 //  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 //=============================================================================
-//
-// This is ECMAScript code (ECMA-262 aka "Java Script")
-//
+
 
 var g_settings, g_UIMessage, g_UIOptions;
 
 // A blank function, since we don't need to run when MuseScore loads or closes, only when we're called.
 
 function GNDN() {}
-
-function checkBlankInstrumentModal() {
-	if (g_UIPrefs.checkBlankInstrument.checked) {
-		QMessageBox.information(g_UIMessage, "Instrument Must be Installed", "Before using this feature please install the instrument as described at <a href=\"http://www.inmff.net/bleh/\">http://www.inmff.net/bleh/</a>");
-	}
-}
-
-// Were passing through this because QT on Windows stores true/false as strings. sigh.
-function getSetting(key, fallback) {
-	var temp;
-	
-	temp = g_settings.value(key, fallback);
-	
-	if(typeof temp !== 'string') {
-		return temp;
-	}
-
-	if(temp === 'true') {
-		return true;
-	} else {
-		return false;
-	}
-
-}
 
 function showPreferences() {
 	var loader, file;
@@ -80,26 +52,10 @@ function showPreferences() {
 
 }
 
-function saveUIPrefsSettings() {
-	g_settings.setValue("UseBlankInstrument", g_UIPrefs.checkBlankInstrument.checked);
-	g_settings.setValue("cacheSettings", g_UIPrefs.checkCacheSettings.checked);
-	g_settings.setValue("bypassDialog", g_UIPrefs.checkBypassDialog.checked);
-
-	// Save to disk
-	g_settings.sync();
-}
-
-// Loads settings into UI
-function loadPresetUIOptions() {
-	// Get Settings and populate the form
-	g_settings = new QSettings(QSettings.NativeFormat, QSettings.UserScope, "MusE", "pluginBellsUsed", null);
-
-	g_UIOptions.radioScore.checked = getSetting("Score", true);
-	g_UIOptions.radioText.checked = getSetting("Text", false);
-	g_UIOptions.radioCSV.checked = getSetting("CSV", false);
-	g_UIOptions.textOutput.checkClipboard.checked = getSetting("Clipboard", false);
-	g_UIOptions.textOutput.checkUseRealSharpFlat.checked = getSetting("UseRealSharpFlat", true);
-	g_UIOptions.checkCSVHeader.checked = getSetting("CSVHeader", true);
+function checkBlankInstrumentModal() {
+	if (g_UIPrefs.checkBlankInstrument.checked) {
+		QMessageBox.information(g_UIMessage, "Instrument Must be Installed", "Before using this feature please install the instrument as described at <a href=\"http://www.inmff.net/bleh/\">http://www.inmff.net/bleh/</a>");
+	}
 }
 
 function displayStaticDefaults() {
@@ -112,7 +68,7 @@ function displayStaticDefaults() {
 	g_UIOptions = loader.load(file, null);
 
 	g_UIOptions.windowTitle = "Select Static Defaults";
-	
+
 	loadPresetUIOptions();
 
 	// connect signals
@@ -134,6 +90,20 @@ function processStaticDefaults() {
 	saveUIOptionsSettings();
 }
 
+// Loads settings into UI
+
+function loadPresetUIOptions() {
+	// Get Settings and populate the form
+	g_settings = new QSettings(QSettings.NativeFormat, QSettings.UserScope, "MusE", "pluginBellsUsed", null);
+
+	g_UIOptions.radioScore.checked = getSetting("Score", true);
+	g_UIOptions.radioText.checked = getSetting("Text", false);
+	g_UIOptions.radioCSV.checked = getSetting("CSV", false);
+	g_UIOptions.textOutput.checkClipboard.checked = getSetting("Clipboard", false);
+	g_UIOptions.textOutput.checkUseRealSharpFlat.checked = getSetting("UseRealSharpFlat", true);
+	g_UIOptions.checkCSVHeader.checked = getSetting("CSVHeader", true);
+}
+
 function saveUIOptionsSettings() {
 	g_settings.setValue("Score", g_UIOptions.radioScore.checked);
 	g_settings.setValue("Text", g_UIOptions.radioText.checked);
@@ -146,7 +116,17 @@ function saveUIOptionsSettings() {
 	g_settings.sync();
 }
 
+function saveUIPrefsSettings() {
+	g_settings.setValue("UseBlankInstrument", g_UIPrefs.checkBlankInstrument.checked);
+	g_settings.setValue("cacheSettings", g_UIPrefs.checkCacheSettings.checked);
+	g_settings.setValue("bypassDialog", g_UIPrefs.checkBypassDialog.checked);
+
+	// Save to disk
+	g_settings.sync();
+}
+
 // Adjust the visible elements on the form per the current checked radio button.
+
 function changedRadio() {
 	if (g_UIOptions.radioText.checked) {
 		g_UIOptions.textOutput.enabled = true;
@@ -166,6 +146,24 @@ function changedRadio() {
 
 }
 
+// Were passing through this because QT on Windows stores true/false as strings. sigh.
+
+function getSetting(key, fallback) {
+	var temp;
+
+	temp = g_settings.value(key, fallback);
+
+	if (typeof temp !== 'string') {
+		return temp;
+	}
+
+	if (temp === 'true') {
+		return true;
+	} else {
+		return false;
+	}
+
+}
 
 var bellsUsedPrefs = {
 	majorVersion: 1,
