@@ -19,12 +19,9 @@
 //  along with this program; if not, write to the Free Software
 //  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 //=============================================================================
-//
-// This is ECMAScript code (ECMA-262 aka "Java Script")
-//
+
 var g_pitch = []; // Pitch array
 var g_settings, g_UIMessage, g_UIOptions;
-
 
 // A blank function, since we don't need to run when MuseScore loads or closes, only when we're called.
 
@@ -54,87 +51,6 @@ function bellsUsed() {
 	} else {
 		displayUIOptions();
 	}
-}
-
-// Were passing through this because QT on Windows stores true/false as strings. sigh.
-
-function getSetting(key, fallback) {
-	var temp;
-
-	temp = g_settings.value(key, fallback);
-
-	if (typeof temp !== 'string') {
-		return temp;
-	}
-
-	if (temp === 'true') {
-		return true;
-	} else {
-		return false;
-	}
-
-}
-
-// Loads settings into UI
-
-function loadPresetUIOptions() {
-	// Get Settings and populate the form
-	g_settings = new QSettings(QSettings.NativeFormat, QSettings.UserScope, "MusE", "pluginBellsUsed", null);
-
-	g_UIOptions.radioScore.checked = getSetting("Score", true);
-	g_UIOptions.radioText.checked = getSetting("Text", false);
-	g_UIOptions.radioCSV.checked = getSetting("CSV", false);
-	g_UIOptions.textOutput.checkClipboard.checked = getSetting("Clipboard", false);
-	g_UIOptions.textOutput.checkUseRealSharpFlat.checked = getSetting("UseRealSharpFlat", true);
-	g_UIOptions.checkCSVHeader.checked = getSetting("CSVHeader", true);
-}
-
-// Display Dialog
-
-function displayUIOptions() {
-	// connect signals
-	g_UIOptions.buttonBox.accepted.connect(processUIOptions);
-	g_UIOptions.radioScore.toggled.connect(changedRadio);
-	g_UIOptions.radioText.toggled.connect(changedRadio);
-	g_UIOptions.radioCSV.toggled.connect(changedRadio);
-
-	// Call Changed Radio to Set visible items properly.
-	changedRadio();
-
-	g_UIOptions.show();
-}
-
-// Adjust the visible elements on the form per the current checked radio button.
-
-function changedRadio() {
-	if (g_UIOptions.radioText.checked) {
-		g_UIOptions.textOutput.enabled = true;
-		g_UIOptions.checkCSVHeader.visible = false;
-		return;
-	}
-	if (g_UIOptions.radioCSV.checked) {
-		g_UIOptions.textOutput.enabled = true;
-		g_UIOptions.checkCSVHeader.visible = true;
-		return;
-	}
-
-	// No radio is selected, or radioScore is selected.
-	g_UIOptions.textOutput.enabled = false;
-	g_UIOptions.checkCSVHeader.visible = false;
-	return;
-
-}
-
-function saveUIOptionsSettings() {
-	g_settings.setValue("Score", g_UIOptions.radioScore.checked);
-	g_settings.setValue("Text", g_UIOptions.radioText.checked);
-	g_settings.setValue("CSV", g_UIOptions.radioCSV.checked);
-	g_settings.setValue("Clipboard", g_UIOptions.textOutput.checkClipboard.checked);
-	g_settings.setValue("UseRealSharpFlat", g_UIOptions.textOutput.checkUseRealSharpFlat.checked);
-	g_settings.setValue("CSVHeader", g_UIOptions.checkCSVHeader.checked);
-
-	// Save to disk
-	g_settings.sync();
 }
 
 // Process the Form
@@ -258,6 +174,32 @@ function textBUC() {
 		return EnharmonicOrder[pitch % 12];
 	}
 
+	// Return the note name
+
+	function noteName(pitch, enharmonic) {
+		var notes = ["C", "G", "D", "A", "E", "B", "F"],
+			accidental, accsymbols;
+
+		if (g_UIOptions.textOutput.checkUseRealSharpFlat.checked) {
+			accsymbols = ["\uD834\uDD2B", "\u266D", "", "\u266F", "\uD834\uDD2A"];
+		} else {
+			accsymbols = ["bb", "b", "", "#", "##"];
+		}
+
+		// find and assign the proper accidental		
+		accidental = enharmonic < 6 ? 0 : enharmonic < 13 ? 1 : enharmonic < 20 ? 2 : enharmonic < 27 ? 3 : 4;
+
+		// the enharmonics nicely line up with note names for mod 7
+		return (notes[enharmonic % 7] + accsymbols[accidental] + findOctave(pitch));
+
+	}
+
+	// Find the proper octave and return it. 
+
+	function findOctave(pitch) {
+		return Math.floor(pitch / 12);
+	}
+
 	// Sorts enharmonics from most preferred to least preferred.
 	// We prefer a natural to any accidental, and a single accidental to a double accidental.
 
@@ -282,31 +224,6 @@ function textBUC() {
 
 		// Although in practice we shouldn't get two values that could be considered equal, just in case we somehow did.
 		return 0;
-	}
-
-	// Return the note name
-
-	function noteName(pitch, enharmonic) {
-		var notes = ["C", "G", "D", "A", "E", "B", "F"],
-			accidental, accsymbols;
-
-		if (g_UIOptions.textOutput.checkUseRealSharpFlat.checked) {
-			accsymbols = ["\uD834\uDD2B", "\u266D", "", "\u266F", "\uD834\uDD2A"];
-		} else {
-			accsymbols = ["bb", "b", "", "#", "##"];
-		}
-
-		// find and assign the proper accidental		
-		accidental = enharmonic < 6 ? 0 : enharmonic < 13 ? 1 : enharmonic < 20 ? 2 : enharmonic < 27 ? 3 : 4;
-
-		// the enharmonics nicely line up with note names for mod 7
-		return (notes[enharmonic % 7] + accsymbols[accidental] + findOctave(pitch));
-
-	}
-
-		// Find the proper octave and return it. 
-	function findOctave(pitch) {
-		return Math.floor(pitch / 12);
 	}
 
 	// Start the output. 
@@ -484,12 +401,6 @@ function textBUC() {
 // Generates Score BUC
 
 function scoreBUC() {
-	var notesInRange = function(x) {
-		if (g_pitch[x].used) {
-			usedpitches = usedpitches + g_pitch[x].enharmonic.length;
-		}
-	};
-
 
 	var processPitch = function(pitch, writeSplitFlats) {
 		var x, numEnharmonics;
@@ -575,12 +486,17 @@ function scoreBUC() {
 
 		chord.addNote(note);
 		cursor.add(chord);
-		
+
 		// Only omit the stem if its a dotted half or shorter.
-		if(tickLen < 1920) {
+		if (tickLen < 1920) {
 			chord = cursor.chord();
 			chord.noStem = true;
 		}
+	}
+
+	function addEndNote() {
+		// Figure out the length that the last note needs to be, and add it 
+		addNote(lastnote, Math.abs(basslen - treblelen) * 480);
 	}
 
 	// Return the last TPC in an enharmonic array. Assumes the array is already sorted.
@@ -605,11 +521,6 @@ function scoreBUC() {
 		return tpc < 13;
 	}
 
-	function addEndNote() {
-		// Figure out the length that the last note needs to be, and add it 
-		addNote(lastnote, Math.abs(basslen - treblelen) * 480);
-	}
-
 	function countFlats(enharmonic) {
 		var x, flats = 0;
 
@@ -622,6 +533,32 @@ function scoreBUC() {
 		return flats;
 
 	}
+
+	// Walks the Treble clef and passes our current position to function fnc.
+
+	function walkTreble(fnc) {
+		var x;
+
+		for (x = clefsplit + 1; x <= 126; x++) {
+			fnc(x);
+		}
+	}
+
+	// Walks the Bass clef and passes our current position to function fnc.
+
+	function walkBass(fnc) {
+		var x;
+
+		for (x = 0; x <= clefsplit; x++) {
+			fnc(x);
+		}
+	}
+
+	var notesInRange = function(x) {
+		if (g_pitch[x].used) {
+			usedpitches = usedpitches + g_pitch[x].enharmonic.length;
+		}
+	};
 
 	function notesInTreble() {
 		usedpitches = 0;
@@ -645,26 +582,6 @@ function scoreBUC() {
 		return usedpitches;
 	}
 
-	// Walks the Treble clef and passes our current position to function fnc.
-
-	function walkTreble(fnc) {
-		var x;
-
-		for (x = clefsplit + 1; x <= 126; x++) {
-			fnc(x);
-		}
-	}
-
-	// Walks the Bass clef and passes our current position to function fnc.
-
-	function walkBass(fnc) {
-		var x;
-
-		for (x = 0; x <= clefsplit; x++) {
-			fnc(x);
-		}
-	}
-
 	// Beginning of scoreBUC
 	var title, composer, measurelen, idx, score, cursor, lastnote, basslen, treblelen, chord, note, usedpitches, clefsplit;
 
@@ -684,7 +601,7 @@ function scoreBUC() {
 
 	// The last note written is a Note object. MuseScore sets lastnote.pitch = 0 here. 
 	lastnote = new Note();
-	
+
 	// Set it invisible for the one time we print it.
 	lastnote.visible = false;
 
@@ -760,6 +677,87 @@ function scoreBUC() {
 	return;
 }
 
+// Display Dialog
+
+function displayUIOptions() {
+	// connect signals
+	g_UIOptions.buttonBox.accepted.connect(processUIOptions);
+	g_UIOptions.radioScore.toggled.connect(changedRadio);
+	g_UIOptions.radioText.toggled.connect(changedRadio);
+	g_UIOptions.radioCSV.toggled.connect(changedRadio);
+
+	// Call Changed Radio to Set visible items properly.
+	changedRadio();
+
+	g_UIOptions.show();
+}
+
+// Loads settings into UI
+
+function loadPresetUIOptions() {
+	// Get Settings and populate the form
+	g_settings = new QSettings(QSettings.NativeFormat, QSettings.UserScope, "MusE", "pluginBellsUsed", null);
+
+	g_UIOptions.radioScore.checked = getSetting("Score", true);
+	g_UIOptions.radioText.checked = getSetting("Text", false);
+	g_UIOptions.radioCSV.checked = getSetting("CSV", false);
+	g_UIOptions.textOutput.checkClipboard.checked = getSetting("Clipboard", false);
+	g_UIOptions.textOutput.checkUseRealSharpFlat.checked = getSetting("UseRealSharpFlat", true);
+	g_UIOptions.checkCSVHeader.checked = getSetting("CSVHeader", true);
+}
+
+function saveUIOptionsSettings() {
+	g_settings.setValue("Score", g_UIOptions.radioScore.checked);
+	g_settings.setValue("Text", g_UIOptions.radioText.checked);
+	g_settings.setValue("CSV", g_UIOptions.radioCSV.checked);
+	g_settings.setValue("Clipboard", g_UIOptions.textOutput.checkClipboard.checked);
+	g_settings.setValue("UseRealSharpFlat", g_UIOptions.textOutput.checkUseRealSharpFlat.checked);
+	g_settings.setValue("CSVHeader", g_UIOptions.checkCSVHeader.checked);
+
+	// Save to disk
+	g_settings.sync();
+}
+
+// Adjust the visible elements on the form per the current checked radio button.
+
+function changedRadio() {
+	if (g_UIOptions.radioText.checked) {
+		g_UIOptions.textOutput.enabled = true;
+		g_UIOptions.checkCSVHeader.visible = false;
+		return;
+	}
+	if (g_UIOptions.radioCSV.checked) {
+		g_UIOptions.textOutput.enabled = true;
+		g_UIOptions.checkCSVHeader.visible = true;
+		return;
+	}
+
+	// No radio is selected, or radioScore is selected.
+	g_UIOptions.textOutput.enabled = false;
+	g_UIOptions.checkCSVHeader.visible = false;
+	return;
+
+}
+
+// Were passing through this because QT on Windows stores true/false as strings. sigh.
+
+function getSetting(key, fallback) {
+	var temp;
+
+	temp = g_settings.value(key, fallback);
+
+	if (typeof temp !== 'string') {
+		return temp;
+	}
+
+	if (temp === 'true') {
+		return true;
+	} else {
+		return false;
+	}
+
+}
+
 // See if an array contains an object from http://stackoverflow.com/questions/237104/array-containsobj-in-javascript
 
 function contains(a, obj) {
@@ -771,7 +769,6 @@ function contains(a, obj) {
 	}
 	return false;
 }
-
 
 // Defines how MuseScore interacts with this plugin
 var bellsUsed = {
