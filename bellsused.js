@@ -448,7 +448,7 @@ function scoreBUC() {
 				note.tpc = lastnote.tpc;
 			}
 
-			addNote(note, 480);
+			addNote(note)
 
 			lastnote.pitch = pitch;
 			lastnote.tpc = note.tpc;
@@ -480,25 +480,44 @@ function scoreBUC() {
 
 	};
 
-	function addNote(note, tickLen) {
+	function addNote(note) {
 		chord = new Chord();
-		chord.tickLen = tickLen;
+		chord.tickLen = 480;
 
 		chord.addNote(note);
 		cursor.add(chord);
 
-		// Only omit the stem if its a dotted half or shorter.
-		if (tickLen < 1920) {
-			chord = cursor.chord();
-			chord.noStem = true;
+		chord = cursor.chord();
+		chord.noStem = true;
+	}
+
+	function addEndNotes() {
+		var x, note, len;
+		
+		if(basslen === 0) {
+			lastnote.pitch = 48;
+			lastnote.tpc = 14;
+		}
+		
+	 	if(treblelen === 0) {
+			lastnote.pitch = 72;
+			lastnote.tpc = 14;			
+		}
+		
+		notesNeeded = Math.abs(basslen - treblelen)
+		
+		// We're adding quarter notes because MuseScore doesn't like really long notes, and it does weird things.
+		// Also we're creating a new note object each time, because MuseScore does funky things if we reuse the same note object.
+		for(x=0; x !== notesNeeded; x++) {
+			note = new Note();
+			note.pitch = lastnote.pitch;
+			note.tpc = lastnote.tpc
+			note.visible = false;
+					
+			addNote(note);
+			cursor.next();
 		}
 	}
-
-	function addEndNote() {
-		// Figure out the length that the last note needs to be, and add it 
-		addNote(lastnote, Math.abs(basslen - treblelen) * 480);
-	}
-
 	// Return the last TPC in an enharmonic array. Assumes the array is already sorted.
 
 	function lastTPC(pitch) {
@@ -602,9 +621,6 @@ function scoreBUC() {
 	// The last note written is a Note object. MuseScore sets lastnote.pitch = 0 here. 
 	lastnote = new Note();
 
-	// Set it invisible for the one time we print it.
-	lastnote.visible = false;
-
 	// Create the Score	
 	score = new Score();
 
@@ -648,7 +664,7 @@ function scoreBUC() {
 
 	// If we have fewer bass notes than treble notes add a hidden padding note.
 	if (basslen < treblelen) {
-		addEndNote();
+		addEndNotes();
 	}
 
 
@@ -668,7 +684,7 @@ function scoreBUC() {
 
 	// If we have fewer treble notes than bass notes add a hidden padding note.
 	if (treblelen < basslen) {
-		addEndNote();
+		addEndNotes();
 	}
 
 	// by ending the "undo" MuseScore will display the score.

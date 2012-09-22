@@ -335,10 +335,10 @@ function textBUC() {
 
 	if (oText) {
 		if (lowOctaveNum === highOctaveNum) {
-			// Nice things will be written about pieces that are symmetrical octave wise.
+			// *** Nice things will be written about pieces that are symmetrical octave wise.
 			//writeOutput("\r\n" + (findOctave(maxPitch) - findOctave(minPitch)) + " octaves with " + NumBellsUsed + " Bells Not Used ranging from " + noteName(minPitch, g_pitch[minPitch].enharmonic[0]) + " to " + noteName(maxPitch, g_pitch[maxPitch].enharmonic[0]) + " with " + NumAccidentalsUsed + " accidentals.\r\n");
 		} else {
-			// Dirty things will be written about pieces that aren't symmetrical octave wise.
+			// *** Dirty things will be written about pieces that aren't symmetrical octave wise.
 		}
 	}
 	endOutput();
@@ -360,7 +360,7 @@ function scoreBUC() {
 		note.tpc = primaryEnharmonicRep(pitch);
 
 
-		addNote(note, 480);
+		addNote(note);
 
 		lastnote.pitch = pitch;
 		lastnote.tpc = note.tpc;
@@ -370,23 +370,43 @@ function scoreBUC() {
 		return;
 	};
 
-	function addNote(note, tickLen) {
+	function addNote(note) {
 		chord = new Chord();
-		chord.tickLen = tickLen;
+		chord.tickLen = 480;
 
 		chord.addNote(note);
 		cursor.add(chord);
 
-		// Only omit the stem if its a dotted half or shorter.
-		if (tickLen < 1920) {
-			chord = cursor.chord();
-			chord.noStem = true;
-		}
+		chord = cursor.chord();
+		chord.noStem = true;
 	}
 
-	function addEndNote() {
-		// Figure out the length that the last note needs to be, and add it 
-		addNote(lastnote, Math.abs(basslen - treblelen) * 480);
+	function addEndNotes() {
+		var x, note, len;
+		
+		if(basslen === 0) {
+			lastnote.pitch = 48;
+			lastnote.tpc = 14;
+		}
+		
+	 	if(treblelen === 0) {
+			lastnote.pitch = 72;
+			lastnote.tpc = 14;			
+		}
+		
+		notesNeeded = Math.abs(basslen - treblelen)
+		
+		// We're adding quarter notes because MuseScore doesn't like really long notes, and it does weird things.
+		// Also we're creating a new note object each time, because MuseScore does funky things if we reuse the same note object.
+		for(x=0; x !== notesNeeded; x++) {
+			note = new Note();
+			note.pitch = lastnote.pitch;
+			note.tpc = lastnote.tpc
+			note.visible = false;
+					
+			addNote(note);
+			cursor.next();
+		}
 	}
 
 	// Walks the Treble clef and passes our current position to function fnc.
@@ -454,9 +474,6 @@ function scoreBUC() {
 	// The last note written is a Note object. MuseScore sets lastnote.pitch = 0 here.
 	lastnote = new Note();
 
-	// Set it invisible for the one time we print it.
-	lastnote.visible = false;
-
 	// Create the Score	
 	score = new Score();
 
@@ -499,7 +516,7 @@ function scoreBUC() {
 
 	// If we have fewer bass notes than treble notes add a hidden padding note.
 	if (basslen < treblelen) {
-		addEndNote();
+		addEndNotes();
 	}
 
 
@@ -512,7 +529,7 @@ function scoreBUC() {
 
 	// If we have fewer treble notes than bass notes add a hidden padding note.
 	if (treblelen < basslen) {
-		addEndNote();
+		addEndNotes();
 	}
 
 	// by ending the "undo" MuseScore will display the score.
