@@ -448,7 +448,7 @@ function scoreBUC() {
 				note.tpc = lastnote.tpc;
 			}
 
-			addNote(note)
+			addNote(note);
 
 			lastnote.pitch = pitch;
 			lastnote.tpc = note.tpc;
@@ -457,8 +457,6 @@ function scoreBUC() {
 
 			x++;
 		}
-
-		return;
 
 		// Root Note
 
@@ -493,27 +491,27 @@ function scoreBUC() {
 
 	function addEndNotes() {
 		var x, note, len;
-		
-		if(basslen === 0) {
+
+		if (basslen === 0) {
 			lastnote.pitch = 48;
 			lastnote.tpc = 14;
 		}
-		
-	 	if(treblelen === 0) {
+
+		if (treblelen === 0) {
 			lastnote.pitch = 72;
-			lastnote.tpc = 14;			
+			lastnote.tpc = 14;
 		}
-		
-		notesNeeded = Math.abs(basslen - treblelen)
-		
+
+		notesNeeded = Math.abs(basslen - treblelen);
+
 		// We're adding quarter notes because MuseScore doesn't like really long notes, and it does weird things.
 		// Also we're creating a new note object each time, because MuseScore does funky things if we reuse the same note object.
-		for(x=0; x !== notesNeeded; x++) {
+		for (x = 0; x !== notesNeeded; x++) {
 			note = new Note();
 			note.pitch = lastnote.pitch;
-			note.tpc = lastnote.tpc
+			note.tpc = lastnote.tpc;
 			note.visible = false;
-					
+
 			addNote(note);
 			cursor.next();
 		}
@@ -659,7 +657,7 @@ function scoreBUC() {
 	cursor.rewind();
 
 	walkBass(function(x) {
-		processPitch(x, false)
+		processPitch(x, false);
 	});
 
 	// If we have fewer bass notes than treble notes add a hidden padding note.
@@ -679,7 +677,7 @@ function scoreBUC() {
 
 
 	walkTreble(function(x) {
-		processPitch(x, false)
+		processPitch(x, false);
 	});
 
 	// If we have fewer treble notes than bass notes add a hidden padding note.
