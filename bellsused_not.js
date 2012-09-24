@@ -241,8 +241,7 @@ function textBUC() {
 	// Start of textBUC function
 
 	var idx, fName, file, textStream, octave, x, minPitch, maxPitch, title, composer, clipboardBuf, oClipboard, oText, startTone, endTone, lowOctaveNum, highOctaveNum, maxOctave = 0,
-		NumBellsUsed = 0,
-		NumAccidentalsUsed = 0;
+		numBellsUsed = 0;
 
 	oClipboard = g_UIOptions.textOutput.checkClipboard.checked;
 	oText = g_UIOptions.radioText.checked;
@@ -308,7 +307,7 @@ function textBUC() {
 			// Find the proper octave
 			octave = findOctave(idx);
 			// update the number of Bells Not Used
-			NumBellsUsed++;
+			numBellsUsed++;
 
 			// If we're starting a new octave put an extra line feed for text output in and set the highest octave
 			if ((oText) && (octave > maxOctave)) {
@@ -336,7 +335,7 @@ function textBUC() {
 	if (oText) {
 		if (lowOctaveNum === highOctaveNum) {
 			// *** Nice things will be written about pieces that are symmetrical octave wise.
-			//writeOutput("\r\n" + (findOctave(maxPitch) - findOctave(minPitch)) + " octaves with " + NumBellsUsed + " Bells Not Used ranging from " + noteName(minPitch, g_pitch[minPitch].enharmonic[0]) + " to " + noteName(maxPitch, g_pitch[maxPitch].enharmonic[0]) + " with " + NumAccidentalsUsed + " accidentals.\r\n");
+			//writeOutput("\r\n" + (findOctave(maxPitch) - findOctave(minPitch)) + " octaves with " + numBellsUsed + " Bells Not Used ranging from " + noteName(minPitch, g_pitch[minPitch].enharmonic[0]) + " to " + noteName(maxPitch, g_pitch[maxPitch].enharmonic[0]) + " with " + numAccidentalsUsed + " accidentals.\r\n");
 		} else {
 			// *** Dirty things will be written about pieces that aren't symmetrical octave wise.
 		}
@@ -362,8 +361,8 @@ function scoreBUC() {
 
 		addNote(note);
 
-		lastnote.pitch = pitch;
-		lastnote.tpc = note.tpc;
+		lastNote.pitch = pitch;
+		lastNote.tpc = note.tpc;
 
 		cursor.next();
 
@@ -384,24 +383,24 @@ function scoreBUC() {
 	function addEndNotes() {
 		var x, note, len;
 
-		if (basslen === 0) {
-			lastnote.pitch = 48;
-			lastnote.tpc = 14;
+		if (bassLen === 0) {
+			lastNote.pitch = 48;
+			lastNote.tpc = 14;
 		}
 
-		if (treblelen === 0) {
-			lastnote.pitch = 72;
-			lastnote.tpc = 14;
+		if (trebleLen === 0) {
+			lastNote.pitch = 72;
+			lastNote.tpc = 14;
 		}
 
-		notesNeeded = Math.abs(basslen - treblelen);
+		notesNeeded = Math.abs(bassLen - trebleLen);
 
 		// We're adding quarter notes because MuseScore doesn't like really long notes, and it does weird things.
 		// Also we're creating a new note object each time, because MuseScore does funky things if we reuse the same note object.
 		for (x = 0; x !== notesNeeded; x++) {
 			note = new Note();
-			note.pitch = lastnote.pitch;
-			note.tpc = lastnote.tpc;
+			note.pitch = lastNote.pitch;
+			note.tpc = lastNote.tpc;
 			note.visible = false;
 
 			addNote(note);
@@ -414,7 +413,7 @@ function scoreBUC() {
 	function walkTreble(fnc) {
 		var x;
 
-		for (x = clefsplit + 1; x <= endTone; x++) {
+		for (x = clefSplit + 1; x <= endTone; x++) {
 			fnc(x);
 		}
 	}
@@ -424,38 +423,38 @@ function scoreBUC() {
 	function walkBass(fnc) {
 		var x;
 
-		for (x = startTone; x <= clefsplit; x++) {
+		for (x = startTone; x <= clefSplit; x++) {
 			fnc(x);
 		}
 	}
 
 	var notesNotInRange = function(x) {
 		if (!g_pitch[x].used) {
-			usedpitches++;
+			usedPitches++;
 		}
 	};
 
 	function notesNotInTreble() {
-		usedpitches = 0;
+		usedPitches = 0;
 
 		walkTreble(notesNotInRange);
 
-		return usedpitches;
+		return usedPitches;
 	}
 
 	function notesNotInBass() {
-		usedpitches = 0;
+		usedPitches = 0;
 
 		walkBass(notesNotInRange);
 
-		return usedpitches;
+		return usedPitches;
 	}
 
 	// Beginning of scoreBUC
-	var title, composer, measurelen, idx, score, cursor, lastnote, basslen, treblelen, chord, note, usedpitches, startTone, endTone, clefsplit;
+	var title, composer, measureLen, idx, score, cursor, lastNote, bassLen, trebleLen, chord, note, usedPitches, startTone, endTone, clefSplit;
 
 	// The tone where the split between the treble and the bass clef is. Any Flat TPCs will go in the treble, naturals and sharps in the bass
-	clefsplit = 61;
+	clefSplit = 61;
 
 	// Set up some details for later
 	title = curScore.title;
@@ -465,14 +464,14 @@ function scoreBUC() {
 	endTone = highOctaveEnd(findHighPitch());
 
 	// Find the number of notes not in each clef
-	basslen = notesNotInBass();
-	treblelen = notesNotInTreble();
+	bassLen = notesNotInBass();
+	trebleLen = notesNotInTreble();
 
 	// Assign measure length to the larger between the notes in the Bass or treble clef.
-	measurelen = Math.max(basslen, treblelen);
+	measureLen = Math.max(bassLen, trebleLen);
 
-	// The last note written is a Note object. MuseScore sets lastnote.pitch = 0 here.
-	lastnote = new Note();
+	// The last note written is a Note object. MuseScore sets lastNote.pitch = 0 here.
+	lastNote = new Note();
 
 	// Create the Score	
 	score = new Score();
@@ -482,7 +481,7 @@ function scoreBUC() {
 	// *** subtitle will carry the octaves used/not used.
 
 	// Make a measure of the appropriate length, so there are no barlines in the BUC.
-	score.timesig = new TimeSig(measurelen, 4);
+	score.timesig = new TimeSig(measureLen, 4);
 	// Be explicit: we want C Major/A Minor (0 flats/sharps) in key sig.
 	score.keysig = 0;
 
@@ -515,7 +514,7 @@ function scoreBUC() {
 	walkBass(processPitch);
 
 	// If we have fewer bass notes than treble notes add a hidden padding note.
-	if (basslen < treblelen) {
+	if (bassLen < trebleLen) {
 		addEndNotes();
 	}
 
@@ -528,7 +527,7 @@ function scoreBUC() {
 	walkTreble(processPitch);
 
 	// If we have fewer treble notes than bass notes add a hidden padding note.
-	if (treblelen < basslen) {
+	if (trebleLen < bassLen) {
 		addEndNotes();
 	}
 
