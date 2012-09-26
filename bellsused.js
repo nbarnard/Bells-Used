@@ -56,13 +56,64 @@ function bellsUsed() {
 // Process the Form
 
 function processUIOptions() {
+	function isBellsUsed(){
+		var titleLength;
+		
+		titleLength = curScore.title.length
+		
+		if (titleLength < 13) {
+			return false;
+		}
+		
+		if (curScore.title.substring(titleLength - 13) === " - Bells Used") {
+			return true;
+		} else { 
+			return false;
+		}
+	}
+	
+	function userPermissionAdjBellsUsed(){
+			var msgBox, buttonPressed;
+		msgBox = new QMessageBox;
+		msgBox.icon = QMessageBox.Information;
+		msgBox.windowTitle = "Bells Used Detected";
+		msgBox.informativeText = "The plugin identified the source score as a bells used chart and made adjustments to the bells used as a result.<br /><br />Should these adjustments be kept?";
+		msgBox.standardButtons = QMessageBox.Yes | QMessageBox.No;
+		msgBox.setDefaultButton(QMessageBox.Yes);
+
+		buttonPressed = msgBox.exec();
+
+		// Check to see if the button pressed is yes (QMessageBox.Yes=16384);
+		if (buttonPressed === 16384){
+			return true;
+		} else {
+			return false;
+		}
+
+	}
+	
+	var adjBellsUsed, userPermission;
+
 	// Save the settings if requested.
 	if (getSetting("cacheSettings", true)) {
 		saveUIOptionsSettings();
 	}
 
 	// Gather the Used Pitches
-	populatePitches();
+	if(isBellsUsed) {
+		// Process as bells used, and see if we made any adjustments.
+		adjBellsUsed = populatePitches(true);
+
+		if (adjBellsUsed) {
+			userPermission = userPermissionAdjBellsUsed();		
+			// Redo the bells used without making adjustments
+			if(!userPermission) {
+				populatePitches(false);
+			}
+		}
+	} else {
+		populatePitches(false);
+	}
 
 	if (g_UIOptions.radioScore.checked) {
 		scoreBUC();
@@ -74,7 +125,7 @@ function processUIOptions() {
 
 // Goes through the whole score Chord by Chord and populates the notes used into Pitch Array.
 
-function populatePitches() {
+function populatePitches(sourceIsBellsUsed) {
 	// Blank Pitch Object
 
 	function BlankPitch() {
@@ -83,7 +134,10 @@ function populatePitches() {
 	}
 
 	// Beginning of pouplatePitches
-	var idx, cursor, staff, voice, i, note, pitch, tone, chord, n;
+	var idx, cursor, staff, voice, i, note, pitch, tone, chord, notesInChord, lastNote, bellsUsedAdjust = false;
+	
+	// Setup Last note.
+	lastNote = new Note();
 
 	// Fill the pitch array with blanks.
 	for (idx = 0; idx < 127; idx++) {
@@ -107,22 +161,36 @@ function populatePitches() {
 				if (cursor.isChord()) {
 					// Set us up to cycle through each individual note of the chord.
 					chord = cursor.chord();
-					n = chord.notes;
-					for (i = 0; i < n; i++) {
+					notesInChord = chord.notes;
+					for (i = 0; i < notesInChord; i++) {
 						note = chord.note(i);
 						pitch = note.pitch;
-						tone = note.tpc;
-
+						tpc = note.tpc;
+						
+						// If check to see if the source probably is a BellsUSed Chart and
+						// we've had two notes of the same pitch/tpc in a row.
+						// If so we've ran into a flat that represents a natural (Re: Issue #6)
+						if (sourceIsBellsUsed && lastNote.pitch === pitch && lastNote.tpc === tpc) {
+							bellsUsedAdjust = true;
+ 							// We actually want the next pitch.
+ 							pitch++;
+ 							// And give it the primary enharmonic representation.
+ 							tpc = primaryEnharmonicRep(pitch);
+						}						
+						
 						// Check to see if the pitch is already used, if not add it.
 						if (g_pitch[pitch].used) {
 							// Check to see if the enharmonic is already listed, if not add it.
-							if (!contains(g_pitch[pitch].enharmonic, tone)) {
-								g_pitch[pitch].enharmonic.push(tone);
+							if (!contains(g_pitch[pitch].enharmonic, tpc)) {
+								g_pitch[pitch].enharmonic.push(tpc);
 							}
 						} else {
 							g_pitch[pitch].used = true;
-							g_pitch[pitch].enharmonic[0] = tone;
+							g_pitch[pitch].enharmonic[0] = tpc;
 						}
+												
+						lastNote.pitch=pitch;
+						lastNote.tpc=tpc;
 					}
 				}
 				// Move the cursor to the next position.
@@ -130,6 +198,8 @@ function populatePitches() {
 			}
 		}
 	}
+
+	return bellsUsedAdjust;
 }
 
 // Generates Text Based BUCs
@@ -162,16 +232,6 @@ function textBUC() {
 		var OnlyAccidental = [-1, 0, 8, 9, 10, 11, 12, 20, 21, 22, 23, 24, 32, 33];
 
 		return contains(OnlyAccidental, enharmonic);
-	}
-
-	// Returns the primary enharmonic given a pitch. 
-	// Primary Enharmonic is the Natural or Sharp representation of a note
-
-	function primaryEnharmonicRep(pitch) {
-		// This the order of enharmonics e.g. 14=C, 21=C#, etc.
-		var EnharmonicOrder = [14, 21, 16, 23, 18, 13, 20, 15, 22, 17, 24, 19];
-
-		return EnharmonicOrder[pitch % 12];
 	}
 
 	// Return the note name
@@ -794,6 +854,17 @@ function getSetting(key, fallback) {
 	}
 
 }
+
+// Returns the primary enharmonic given a pitch. 
+// Primary Enharmonic is the Natural or Sharp representation of a note
+
+function primaryEnharmonicRep(pitch) {
+	// This the order of enharmonics e.g. 14=C, 21=C#, etc.
+	var EnharmonicOrder = [14, 21, 16, 23, 18, 13, 20, 15, 22, 17, 24, 19];
+
+	return EnharmonicOrder[pitch % 12];
+}
+
 
 // See if an array contains an object from http://stackoverflow.com/questions/237104/array-containsobj-in-javascript
 
