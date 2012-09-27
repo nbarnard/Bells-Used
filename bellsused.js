@@ -56,21 +56,6 @@ function bellsUsed() {
 // Process the Form
 
 function processUIOptions() {
-	function isBellsUsed(){
-		var titleLength;
-		
-		titleLength = curScore.title.length
-		
-		if (titleLength < 13) {
-			return false;
-		}
-		
-		if (curScore.title.substring(titleLength - 13) === " - Bells Used") {
-			return true;
-		} else { 
-			return false;
-		}
-	}
 	
 	function userPermissionAdjBellsUsed(){
 			var msgBox, buttonPressed;
@@ -167,7 +152,7 @@ function populatePitches(sourceIsBellsUsed) {
 						pitch = note.pitch;
 						tpc = note.tpc;
 						
-						// If check to see if the source probably is a BellsUSed Chart and
+						// If check to see if the source probably is a BellsUsed Chart and
 						// we've had two notes of the same pitch/tpc in a row.
 						// If so we've ran into a flat that represents a natural (Re: Issue #6)
 						if (sourceIsBellsUsed && lastNote.pitch === pitch && lastNote.tpc === tpc) {
@@ -363,7 +348,7 @@ function textBUC() {
 	oText = g_UIOptions.radioText.checked;
 
 	// Set up some details for later
-	title = curScore.title;
+	title = cleanCurScoreTitle()
 	composer = curScore.composer;
 
 	if (!startOutput()) {
@@ -689,7 +674,7 @@ function scoreBUC() {
 	clefSplit = 61;
 
 	// Set up some details for later
-	title = curScore.title;
+	title = cleanCurScoreTitle();
 	composer = curScore.composer;
 
 	// Find the number of notes in each clef
@@ -854,6 +839,36 @@ function getSetting(key, fallback) {
 	}
 
 }
+
+// Cleans the current Score title of " - Bells Used"
+function cleanCurScoreTitle() {
+	var titleLength;
+	
+	if (isBellsUsed()) { 
+		titleLength = curScore.title.length;
+		return curScore.title.substring(0, titleLength - 13);
+	} else {
+		return curScore.title;
+	}
+}
+
+// Returns True/False if the current score title contains "Bells Used"
+function isBellsUsed(){
+	var titleLength;
+	
+	titleLength = curScore.title.length;
+	
+	if (titleLength < 13) {
+		return false;
+	}
+	
+	if (curScore.title.substring(titleLength - 13) === " - Bells Used") {
+		return true;
+	} else { 
+		return false;
+	}
+}
+
 
 // Returns the primary enharmonic given a pitch. 
 // Primary Enharmonic is the Natural or Sharp representation of a note
