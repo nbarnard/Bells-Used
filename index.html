@@ -32,7 +32,7 @@
       <section>
         <h3>Bells Used Plugin for MuseScore 1.2</h3>
 
-<p>Bells Used Plugin is for <a href="http://musescore.org">MuseScore 1.2</a>, it generates Bells Used information and can present it in a score format, a text file, or as CSV file for use with spreadsheet software.</p>
+<p>Bells Used Plugin is for <a href="http://musescore.org">MuseScore 1.2</a>. It generates Bells Used information and can present it in a score format, a text file, or a CSV file for use with spreadsheet software.</p>
 
 <h3>Getting Started</h3>
 
@@ -47,7 +47,7 @@
 <li>The plugin can be accessed from the Plugin-&gt;Bells Used Menu</li>
 </ul><h3>Using the Plugin</h3>
 
-<p>When you are ready to create a Bells Used Chart select it from the plugin menu:<img src="http://raw.github.com/nbarnard/img/master/bells-used/menu.png" alt="Bells Used Menu Location: Plugin-&gt;Bells Used-&gt;Create Bells Used"></p>
+<p>When you are ready to create a Bells Used Chart, select it from the plugin menu:<img src="http://raw.github.com/nbarnard/img/master/bells-used/menu.png" alt="Bells Used Menu Location: Plugin-&gt;Bells Used-&gt;Create Bells Used"></p>
 
 <p>There are several options that can be selected each time the plugin is run. By default the plugin will store your last used options.</p>
 
@@ -76,7 +76,7 @@
 <li>Include Header Row: When checked, the first row of the CSV file will have a header describing each of the columns. </li>
 </ul><h3>Bells Not Used</h3>
 
-<p>Bells Not Used is a companion plugin that will output the bells not used. It will output the bells not used. The plugin will automatically detect the minimum octave set required to play the piece, and it will print the notes that are not needed from this set. This plugin shares the default options with the Bells Used Plugin.</p>
+<p>Bells Not Used is a companion plugin that will output the bells not used. The plugin will automatically detect the minimum octave set required to play the piece, and it will print the notes that are not needed from this set. This plugin shares the default options with the Bells Used Plugin.</p>
 
 <h3>Preferences</h3>
 
@@ -86,9 +86,9 @@
 
 <ul>
 <li>Use Blank Name Instrument: Uses an instrument without a title instead of the Piano. To function properly, the instrument must be installed as described in the <a href="#blankname">Blank Name Instrument Installation</a> section.</li>
-<li>Save Last Used Output Options: When checked the plugin will save the last used output options for the next use. If unchecked the plugin will use the last saved options. </li>
+<li>Save Last Used Output Options: When checked, the plugin will save the previous last used output options for the next use. If unchecked the plugin will use the last saved options. </li>
 <li>Bypass Output Options Dialog: When checked the plugin will not present the output options dialog, and instead will use the last saved or the default options.</li>
-<li>Set Default Options: Will bring up a dialog that allows you to set the default options. These options will be overwritten last used options if Save Last USed Output Options above is checked.</li>
+<li>Set Default Options: Will bring up a dialog that allows you to set the default options. These options will be overwritten last used options if Save Last Used Output Options above is checked.</li>
 </ul><h4>
 <a name="blankname"></a>Blank Name Instrument</h4>
 
@@ -96,14 +96,14 @@
 
 <h3>Score Output Quirks</h3>
 
-<p>When generating a score, the Bells Used Plugin generates a score that is visually correct when printed, but it has several adjustments to achieve this presentation. </p>
+<p>When generating a score, the Bells Used Plugin generates a score that is visually correct when printed, but it needs several adjustments to achieve this presentation. </p>
 
 <p><img src="http://raw.github.com/nbarnard/img/master/bells-used/score-example.png" alt="Bells Used Score Output Example"></p>
 
 <ul>
-<li>Notes that are already represented by a different enharmonic representation are printed with an X notehead. In this example the A♭4 is printed with an X notehead, as it is already represented by the G♯4. Similarly, the B♭4 is printed with an X notehead, as it is represented by the A♯4. (Preexisting precedent is to place the related enharmonics within parens. MuseScore does not allow plugins to access the paren symbols.) </li>
-<li>Notes that are follow their related flat are printed as a flat. In this example, G♮4 is printed as a G♭4 so that the natural symbol is not printed, per precedent for Bells Used Charts. Similarly, the B♮4 is printed as a B♭4. (This is due to a restriction on plugins in MuseScore that the accidental symbol cannot be suppressed or hidden.)</li>
-<li>Several quarter notes are written in the staff that has a fewer number of notes. In this example, five E6 quarter notes are printed. These notes are automatically hidden and are not visible in the printed form (This is due to a restriction on plugins in MuseScore being unable to hide rests.)</li>
+<li>Notes that are already represented by a different enharmonic representation are printed with an X notehead. In this example the A♭4 is printed with an X notehead, as it is already represented by the G♯4. Similarly, the B♭4 is printed with an X notehead, as it is represented by the A♯4. (Preexisting precedent is to place the related enharmonics within parentheses. MuseScore does not allow plugins to access the parenthesis symbols.) </li>
+<li>Notes that are follow their related flat are printed as a flat. In this example, G♮4 is printed as a G♭4 so that the natural symbol is not printed, per precedent for Bells Used Charts. Similarly, the B♮4 is printed as a B♭4. (This is due to a restriction on plugins in MuseScore: the accidental symbol cannot be suppressed or hidden.)</li>
+<li>Several quarter notes are written in the staff that has a lesser number of notes. In this example, five E6 quarter notes are printed. These notes are automatically hidden and are not visible in the printed form (This is due to a restriction on plugins in MuseScore being unable to hide rests.)</li>
 </ul>
       </section>
       <footer>
