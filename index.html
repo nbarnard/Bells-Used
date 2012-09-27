@@ -64,7 +64,7 @@
 <p>When Plain Text output is selected there are two additional options available:</p>
 
 <ul>
-<li>Use "Real" sharps and flats: When checked the plugin will use Unicode Sharp, Flat, Double Sharp, and Double Flat symbols in text outputs. Uncheck this option if the text is not readable. If this option is unchecked the plugin will output "#" for Sharps and "b" for Flats, utilizing two of each for Double Sharps and Double Flats</li>
+<li>Use "Real" sharps and flats: When checked the plugin will use Unicode Sharp, Flat, Double Sharp, and Double Flat symbols in text outputs. Uncheck this option if the text is not readable. If this option is unchecked the plugin will output "#" for Sharps and "b" for Flats, utilizing two of each character for Double Sharps and Double Flats</li>
 <li>Copy to Clipboard: When checked, the plugin will copy the Bells Used information to the clipboard instead of saving the information to a file.</li>
 </ul><h4>CSV</h4>
 
@@ -92,7 +92,17 @@
 </ul><h4>
 <a name="blankname"></a>Blank Name Instrument</h4>
 
-<p>Instructions to install the blank name instrument.</p>
+<p>By default when creating a score bells used chart the plugin will the score score with the Piano as the instrument. (The preinstalled Handbell instrument is divided into two instruments "High Hand Bells" and "Low Hand Bells".) The plugin can utilize an instrument with a blank name. This special instrument is included with the plugin in the instruments directory.</p>
+
+<p>If you have customized your instruments.xml file you must manually add the instrument from the "instruments/blankinstrument.xml" file. A majority of users have not customized their instruments.xml file.</p>
+
+<p>If you have not customized your instruments.xml file, the plugin includes versions of the standard instruments.xml files with the blank name instrument added. To switch to utilizing this file instead of the built in file:
+1. From MuseScore open the Preferences Pane. (On Mac OS X: Select the MuseScore Menu then Preferences. On Windows or Linux: Select the Edit Menu then Preferences.)
+2. Select the General Tab.
+3. Click the folder icon next to Instrument List:
+<img src="http://raw.github.com/nbarnard/img/master/bells-used/musescore-preferences.png" alt="MuseScore Preferences Pane">
+4. Select the correct instruments.xml for your language. The instruments files are located in the /instruments/ in the <a href="http://musescore.org/en/handbook/plugins">MuseScore Plugin Directory</a>.
+5. Save the preferences.</p>
 
 <h3>Score Output Quirks</h3>
 
