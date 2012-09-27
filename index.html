@@ -55,7 +55,7 @@
 
 <p>By default the Bells Used Plugin will create a new score:<img src="http://raw.github.com/nbarnard/img/master/bells-used/dialog-default.png" alt="Dialog at defaults"></p>
 
-<p>By default the plugin will create a score with the Piano as the instrument. See <a href="#blankname">Blank Name Instrument</a> to create a score without the Piano name.</p>
+<p>By default the plugin will create a score with the Piano as the instrument. See [Blank Name Instrument][blankname] to create a score without the Piano name.</p>
 
 <h4>Plain Text</h4>
 
@@ -85,26 +85,28 @@
 <p>The Bells Used Plugin has several options that you can set to streamline your workflow. These options affect both the Bells Used and the Bells Not Used options.</p>
 
 <ul>
-<li>Use Blank Name Instrument: Uses an instrument without a title instead of the Piano. To function properly, the instrument must be installed as described in the <a href="#blankname">Blank Name Instrument Installation</a> section.</li>
+<li>Use Blank Name Instrument: Uses an instrument without a title instead of the Piano. To function properly, the instrument must be installed as described in the [Blank Name Instrument Installation][blankname] section.</li>
 <li>Save Last Used Output Options: When checked, the plugin will save the previous last used output options for the next use. If unchecked the plugin will use the last saved options. </li>
 <li>Bypass Output Options Dialog: When checked the plugin will not present the output options dialog, and instead will use the last saved or the default options.</li>
 <li>Set Default Options: Will bring up a dialog that allows you to set the default options. These options will be overwritten last used options if Save Last Used Output Options above is checked.</li>
-</ul><h4>
-<a name="blankname"></a>Blank Name Instrument</h4>
+</ul><p>[blankname]</p>
+
+<h4>Blank Name Instrument</h4>
 
 <p>By default when creating a score bells used chart the plugin will the score score with the Piano as the instrument. (The preinstalled Handbell instrument is divided into two instruments "High Hand Bells" and "Low Hand Bells".) The plugin can utilize an instrument with a blank name. This special instrument is included with the plugin in the instruments directory.</p>
 
 <p>If you have customized your instruments.xml file you must manually add the instrument from the "instruments/blankinstrument.xml" file. A majority of users have not customized their instruments.xml file.</p>
 
-<p>If you have not customized your instruments.xml file, the plugin includes versions of the standard instruments.xml files with the blank name instrument added. To switch to utilizing this file instead of the built in file:
-1. From MuseScore open the Preferences Pane. (On Mac OS X: Select the MuseScore Menu then Preferences. On Windows or Linux: Select the Edit Menu then Preferences.)
-2. Select the General Tab.
-3. Click the folder icon next to Instrument List:
-<img src="http://raw.github.com/nbarnard/img/master/bells-used/musescore-preferences.png" alt="MuseScore Preferences Pane">
-4. Select the correct instruments.xml for your language. The instruments files are located in the /instruments/ in the <a href="http://musescore.org/en/handbook/plugins">MuseScore Plugin Directory</a>.
-5. Save the preferences.</p>
+<p>If you have not customized your instruments.xml file, the plugin includes versions of the standard instruments.xml files with the blank name instrument added. To switch to utilizing this file instead of the built in file:</p>
 
-<h3>Score Output Quirks</h3>
+<ol>
+<li>From MuseScore open the Preferences Pane. (On Mac OS X: Select the MuseScore Menu then Preferences. On Windows or Linux: Select the Edit Menu then Preferences.)</li>
+<li>Select the General Tab.</li>
+<li>Click the folder icon next to Instrument List:<img src="http://raw.github.com/nbarnard/img/master/bells-used/musescore-preferences.png" alt="MuseScore Preferences Pane">
+</li>
+<li>Select the correct instruments.xml for your language. The instruments files are located in the /instruments/ in the <a href="http://musescore.org/en/handbook/plugins">MuseScore Plugin Directory</a>.</li>
+<li>Save the preferences.</li>
+</ol><h3>Score Output Quirks</h3>
 
 <p>When generating a score, the Bells Used Plugin generates a score that is visually correct when printed, but it needs several adjustments to achieve this presentation. </p>
 
@@ -118,7 +120,7 @@
 
 <h4>Why doesn't the plugin do everything Finale's Create Handbells Used Chart plug-in does?</h4>
 
-<p>The plugin does implement many of the features from Finale's Create Handbells Used Chart plug-in. In some cases it offers additional options, and in other cases it implements the most commonly used options. If you would like additional options, please <a href="email%20Nick%20Barnard">http://www.inmff.net/mailme.html</a> with your request.</p>
+<p>The plugin does implement many of the features from Finale's Create Handbells Used Chart plug-in. In some cases it offers additional options, and in other cases it implements the most commonly used options. If you would like additional options, please <a href="http://www.inmff.net/mailme.html">email Nick Barnard</a> with your request.</p>
 
 <h4>Why doesn't the plugin work on MuseScore 2.0?</h4>
 
@@ -126,12 +128,12 @@
 
 <h4>Why doesn't the plugin do X?</h4>
 
-<p>I'm not sure. There may or may not be a good reason, although we have already considered and rejected writing in a combination hooka and coffee maker, that also makes julienne fries! You're encouraged to request additional features, please <a href="email%20Nick%20Barnard">http://www.inmff.net/mailme.html</a> with your ideas.</p>
+<p>I'm not sure. There may or may not be a good reason, although we have already considered and rejected writing in a combination hooka and coffee maker, that also makes julienne fries! You're encouraged to request additional features, please <a href="http://www.inmff.net/mailme.html">email Nick Barnard</a> with your ideas.</p>
 
 <h3>Version History</h3>
 
 <ul>
-<li>v 1.0 - 27 September 2012 - Initial Release. Derived from Mike Magatagan's <a href="Count%20Notes%20plugin">http://musescore.org/en/project/countnotes</a>.</li>
+<li>v 1.0 - 27 September 2012 - Initial Release. Derived from Mike Magatagan's <a href="http://musescore.org/en/project/countnotes">Count Notes plugin</a>.</li>
 </ul>
       </section>
       <footer>
