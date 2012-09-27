@@ -112,8 +112,26 @@
 
 <ul>
 <li>Notes that are already represented by a different enharmonic representation are printed with an X notehead. In this example the A♭4 is printed with an X notehead, as it is already represented by the G♯4. Similarly, the B♭4 is printed with an X notehead, as it is represented by the A♯4. (Preexisting precedent is to place the related enharmonics within parentheses. MuseScore does not allow plugins to access the parenthesis symbols.) </li>
-<li>Notes that are follow their related flat are printed as a flat. In this example, G♮4 is printed as a G♭4 so that the natural symbol is not printed, per precedent for Bells Used Charts. Similarly, the B♮4 is printed as a B♭4. (This is due to a restriction on plugins in MuseScore being unable to hide or suppress an accidental symbol.)</li>
+<li>Notes that are follow their related flat are printed as a flat. In this example, G♮4 is printed as a G♭4 so that the natural symbol is not printed, per precedent for Bells Used Charts. Similarly, the B♮4 is printed as a B♭4. The plugin will properly adjust for this when generating Bells Used or Bells Not Used information from an existing Bell Used Score. (This is due to a restriction on plugins in MuseScore being unable to hide or suppress an accidental symbol.)</li>
 <li>Several quarter notes are written in the staff that has a lesser number of notes. In this example, five E6 quarter notes are printed. These notes are automatically hidden and are not visible in the printed form (This is due to a restriction on plugins in MuseScore being unable to hide rests.)</li>
+</ul><h3>Questions and Answers</h3>
+
+<h4>Why doesn't the plugin do everything Finale's Create Handbells Used Chart plug-in does?</h4>
+
+<p>The plugin does implement many of the features from Finale's Create Handbells Used Chart plug-in. In some cases it offers additional options, and in other cases it implements the most commonly used options. If you would like additional options, please <a href="email%20Nick%20Barnard">http://www.inmff.net/mailme.html</a> with your request.</p>
+
+<h4>Why doesn't the plugin work on MuseScore 2.0?</h4>
+
+<p>At the moment, MuseScore 2.0 doesn't allow for plugins to have their own user interfaces. Once this functionality matures in MuseScore 2.0 a version will be offered for that system.</p>
+
+<h4>Why doesn't the plugin do X?</h4>
+
+<p>I'm not sure. There may or may not be a good reason, although we have already considered and rejected writing in a combination hooka and coffee maker, that also makes julienne fries! You're encouraged to request additional features, please <a href="email%20Nick%20Barnard">http://www.inmff.net/mailme.html</a> with your ideas.</p>
+
+<h3>Version History</h3>
+
+<ul>
+<li>v 1.0 - 27 September 2012 - Initial Release. Derived from Mike Magatagan's <a href="Count%20Notes%20plugin">http://musescore.org/en/project/countnotes</a>.</li>
 </ul>
       </section>
       <footer>
