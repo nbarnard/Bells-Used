@@ -429,7 +429,6 @@ function textBUC() {
 		writeTextOutput("");
 		writeTextOutput("Specific Notes Used:");
 	} else {
-
 		if (g_UIOptions.checkCSVHeader.checked) {
 			// Write out all the header including all the notes in order
 			writeCSVOutput("Title");
@@ -486,6 +485,7 @@ function textBUC() {
 					writeTextOutput("");
 				}
 
+				// Put a dash in if we have another enharmonic representation of this note.
 				if (x !== 0) {
 					noteBuffer = noteBuffer + "-";
 				}
