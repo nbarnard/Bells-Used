@@ -56,9 +56,9 @@ function bellsUsed() {
 // Process the Form
 
 function processUIOptions() {
-	
-	function userPermissionAdjBellsUsed(){
-			var msgBox, buttonPressed;
+
+	function userPermissionAdjBellsUsed() {
+		var msgBox, buttonPressed;
 		msgBox = new QMessageBox;
 		msgBox.icon = QMessageBox.Information;
 		msgBox.windowTitle = "Bells Used Detected";
@@ -69,14 +69,14 @@ function processUIOptions() {
 		buttonPressed = msgBox.exec();
 
 		// Check to see if the button pressed is yes (QMessageBox.Yes=16384);
-		if (buttonPressed === 16384){
+		if (buttonPressed === 16384) {
 			return true;
 		} else {
 			return false;
 		}
 
 	}
-	
+
 	var adjBellsUsed, userPermission;
 
 	// Save the settings if requested.
@@ -85,14 +85,14 @@ function processUIOptions() {
 	}
 
 	// Gather the Used Pitches
-	if(isBellsUsed) {
+	if (isBellsUsed) {
 		// Process as bells used, and see if we made any adjustments.
 		adjBellsUsed = populatePitches(true);
 
 		if (adjBellsUsed) {
-			userPermission = userPermissionAdjBellsUsed();		
+			userPermission = userPermissionAdjBellsUsed();
 			// Redo the bells used without making adjustments
-			if(!userPermission) {
+			if (!userPermission) {
 				populatePitches(false);
 			}
 		}
@@ -120,7 +120,7 @@ function populatePitches(sourceIsBellsUsed) {
 
 	// Beginning of pouplatePitches
 	var idx, cursor, staff, voice, i, note, pitch, tone, chord, notesInChord, lastNote, bellsUsedAdjust = false;
-	
+
 	// Setup Last note.
 	lastNote = new Note();
 
@@ -151,18 +151,18 @@ function populatePitches(sourceIsBellsUsed) {
 						note = chord.note(i);
 						pitch = note.pitch;
 						tpc = note.tpc;
-						
+
 						// If check to see if the source probably is a BellsUsed Chart and
 						// we've had two notes of the same pitch/tpc in a row.
 						// If so we've ran into a flat that represents a natural (Re: Issue #6)
 						if (sourceIsBellsUsed && lastNote.pitch === pitch && lastNote.tpc === tpc) {
 							bellsUsedAdjust = true;
- 							// We actually want the next pitch.
- 							pitch++;
- 							// And give it the primary enharmonic representation.
- 							tpc = primaryEnharmonicRep(pitch);
-						}						
-						
+							// We actually want the next pitch.
+							pitch++;
+							// And give it the primary enharmonic representation.
+							tpc = primaryEnharmonicRep(pitch);
+						}
+
 						// Check to see if the pitch is already used, if not add it.
 						if (g_pitch[pitch].used) {
 							// Check to see if the enharmonic is already listed, if not add it.
@@ -173,9 +173,9 @@ function populatePitches(sourceIsBellsUsed) {
 							g_pitch[pitch].used = true;
 							g_pitch[pitch].enharmonic[0] = tpc;
 						}
-												
-						lastNote.pitch=pitch;
-						lastNote.tpc=tpc;
+
+						lastNote.pitch = pitch;
+						lastNote.tpc = tpc;
 					}
 				}
 				// Move the cursor to the next position.
@@ -210,15 +210,6 @@ function textBUC() {
 		return x;
 	}
 
-	// Returns True if the primary representation of this note is an acidental 
-
-	function onlyAccidentalRep(enharmonic) {
-		// These are enharmonics that can only be expressed as a sharp or flat
-		var OnlyAccidental = [-1, 0, 8, 9, 10, 11, 12, 20, 21, 22, 23, 24, 32, 33];
-
-		return contains(OnlyAccidental, enharmonic);
-	}
-
 	// Return the note name
 
 	function noteName(pitch, enharmonic) {
@@ -239,12 +230,43 @@ function textBUC() {
 
 	}
 
+
+	// Counts the number of bells used
+
+	function countBellsUsed() {
+		var idx, BellsUsed = 0,
+			AccidentalsUsed = 0;
+
+		// Iterate through all the notes from the bottom to the top printing out the ones that are used.
+		for (idx = 0; idx < 127; idx++) {
+			if (g_pitch[idx].used) {
+				BellsUsed++;
+				if (isAccidental(primaryEnharmonicRep(idx))) {
+					AccidentalsUsed++;
+				}
+			}
+		}
+
+		this.total = BellsUsed;
+		this.accidentals = AccidentalsUsed;
+	}
+
+	// Returns True if the primary representation of this note is an acidental 
+
+	function isAccidental(enharmonic) {
+		// These are enharmonics that can only be expressed as a sharp or flat
+		var OnlyAccidental = [-1, 0, 8, 9, 10, 11, 12, 20, 21, 22, 23, 24, 32, 33];
+
+		return contains(OnlyAccidental, enharmonic);
+	}
+
+
 	// Find the proper octave and return it. 
 
 	function findOctave(pitch) {
 		return Math.floor(pitch / 12);
 	}
-	
+
 	// Returns the handbell octave associated with the low note (e.g. is this note in a 2, 3, 4, 5, 6, or 7 octave set?
 
 	function highOctaveNumber(pitch) {
@@ -324,6 +346,24 @@ function textBUC() {
 			clipboardBuf = clipboardBuf + buf;
 		}
 	}
+	
+	function writeCSVOutput(text) {
+		var cell;
+
+		if (typeof text === 'string') {
+			// Remove any linefeeds
+			cell = text.replace("\n", " ");
+		} else {
+			cell = text;
+		}
+
+		writeOutput(cell + ",");
+	}
+
+	function writeTextOutput(buf) {
+		writeOutput(buf + "\r\n");
+	}
+
 
 	// Close our output.
 
@@ -339,67 +379,92 @@ function textBUC() {
 
 	// Start of textBUC function
 
-	var idx, fName, file, textStream, octave, x, minPitch, maxPitch, octavesUsed, maxOctave = 0,
-		numBellsUsed = 0,
-		numAccidentalsUsed = 0,
-		title, composer, clipboardBuf, oClipboard, oText;
+	var idx, fName, file, textStream, octave, x, lowPitch, highPitch, octavesUsed, lowOctave, highOctave, lastOctave = 0,
+		numBellsUsed, title, composer, clipboardBuf, oClipboard, oText, noteBuffer;
 
 	oClipboard = g_UIOptions.textOutput.checkClipboard.checked;
 	oText = g_UIOptions.radioText.checked;
 
 	// Set up some details for later
-	title = cleanCurScoreTitle()
+	title = cleanCurScoreTitle();
 	composer = curScore.composer;
+
+	lowPitch = findLowPitch();
+	highPitch = findHighPitch();
+
+	lowOctave = lowOctaveNumber(lowPitch);
+	highOctave = highOctaveNumber(highPitch);
+
+	octavesUsed = Math.max(lowOctave, highOctave);
+
+	numBellsUsed = new countBellsUsed();
+
+	// sort the enharmonics for the min and the max pitch         
+	g_pitch[lowPitch].enharmonic.sort(sortenharmonics);
+	g_pitch[highPitch].enharmonic.sort(sortenharmonics);
 
 	if (!startOutput()) {
 		return;
 	}
 
-	minPitch = findLowPitch();
-	maxPitch = findHighPitch();
-	
-	octavesUsed = Math.max (lowOctaveNumber(minPitch), highOctaveNumber(maxPitch))
-
-	// Write out the header for the piece. If we have the title and the composer output both. 
-	// If we have just the title output it. If we have neither. don't output any of it.
+	// Write out the header for the piece. 	
 	// MuseScore returns an empty string instead of undefined, so we test for that.
 	if (oText) {
-		writeOutput("Bells Used");
+		writeTextOutput("Bells Used Information");
 		if (title !== "") {
-			writeOutput(" in \"" + title + "\"");
-			if (composer !== "") {
-				writeOutput(" By: " + composer);
-			}
+			writeTextOutput("Title: \"" + title + "\"");
 		}
-		writeOutput(":\r\n");
+		if (composer !== "") {
+			writeTextOutput("Composer: " + composer);
+		}
+		if (lowOctave === highOctave) {
+			writeTextOutput("Octaves Used: " + octavesUsed);
+		} else {
+			writeTextOutput("Octaves Used: " + octavesUsed + " (Lowest Octave Used: " + lowOctave + " Highest Octave Used: " + highOctave + ")");
+		}
+		writeTextOutput("Lowest Bell Used: " + noteName(lowPitch, g_pitch[lowPitch].enharmonic[0]));
+		writeTextOutput("Highest Bell Used: " + noteName(highPitch, g_pitch[highPitch].enharmonic[0]));
+		writeTextOutput("Bells Used: " + numBellsUsed.total);
+		writeTextOutput("Accidentals Used: " + numBellsUsed.accidentals);
+		writeTextOutput("");
+		writeTextOutput("Specific Notes Used:");
 	} else {
+
 		if (g_UIOptions.checkCSVHeader.checked) {
 			// Write out all the header including all the notes in order
-			writeOutput("Title,Composer,Low Pitch,High Pitch,Octaves Used,");
-
+			writeCSVOutput("Title");
+			writeCSVOutput("Composer");
+			writeCSVOutput("Octaves Used");
+			writeCSVOutput("Low Octave");
+			writeCSVOutput("High Octave");
+			writeCSVOutput("Lowest Pitch");
+			writeCSVOutput("Highest Pitch");
+			writeCSVOutput("Bells Used");
+			writeCSVOutput("Accidentals Used");
 			for (x = 0; x < 127; x++) {
-				writeOutput(noteName(x, primaryEnharmonicRep(x)) + ",");
+				writeCSVOutput(noteName(x, primaryEnharmonicRep(x)));
 			}
 			writeOutput("\r\n");
 		}
+
 		if (title !== "") {
-			writeOutput(title + ",");
-			if (composer !== "") {
-				writeOutput(composer + ",");
-			} else {
-				writeOutput(",");
-			}
+			writeCSVOutput(title);
 		} else {
-			writeOutput(",,");
+			writeCSVOutput("");
+		}
+		if (composer !== "") {
+			writeCSVOutput(composer);
+		} else {
+			writeCSVOutput("");
 		}
 
-		// sort the enharmonics for the min and the max pitch         
-		g_pitch[minPitch].enharmonic.sort(sortenharmonics);
-		g_pitch[maxPitch].enharmonic.sort(sortenharmonics);
-
-		writeOutput(noteName(minPitch, g_pitch[minPitch].enharmonic[0]) + ",");
-		writeOutput(noteName(maxPitch, g_pitch[maxPitch].enharmonic[0]) + ",");
-		writeOutput(octavesUsed + ",");
+		writeCSVOutput(octavesUsed);
+		writeCSVOutput(lowOctave);
+		writeCSVOutput(highOctave);
+		writeCSVOutput(noteName(lowPitch, g_pitch[lowPitch].enharmonic[0]));
+		writeCSVOutput(noteName(highPitch, g_pitch[highPitch].enharmonic[0]));
+		writeCSVOutput(numBellsUsed.total);
+		writeCSVOutput(numBellsUsed.accidentals);
 	}
 
 	// Iterate through all the notes from the bottom to the top printing out the ones that are used.
@@ -408,50 +473,38 @@ function textBUC() {
 		if (g_pitch[idx].used) {
 			// Find the proper octave
 			octave = findOctave(idx);
-			// update the number of bells used
-			numBellsUsed++;
 			// sort the enharmonics 
 			g_pitch[idx].enharmonic.sort(sortenharmonics);
 
+			noteBuffer = "";
+
 			// cycle through the whole enharmonic array
 			for (x = 0; x < g_pitch[idx].enharmonic.length; x++) {
-				// If this enharmonic is contained within the enharmonic only array and this is our first time through increment the accidentals.
-				if (onlyAccidentalRep(g_pitch[idx].enharmonic[x]) && x === 0) {
-					numAccidentalsUsed++;
-				}
-
 				// If we're starting a new octave put an extra line feed for text output in and set the highest octave
-				if ((oText) && (octave > maxOctave)) {
-					maxOctave = octave;
-					writeOutput("\r\n");
+				if ((oText) && (octave > lastOctave)) {
+					lastOctave = octave;
+					writeTextOutput("");
 				}
 
-				// If we have more than one enharmonic seperate them with a slash for text, a dash for CSV.
 				if (x !== 0) {
-					if (oText) {
-						writeOutput("\\");
-					} else {
-						writeOutput("-");
-					}
+					noteBuffer = noteBuffer + "-";
 				}
-				writeOutput(noteName(idx, g_pitch[idx].enharmonic[x]));
+
+				noteBuffer = noteBuffer + noteName(idx, g_pitch[idx].enharmonic[x]);
+
 			}
-			// if its text output a linefeed, if CSV output output a comma.
+			// Output the Note
 			if (oText) {
-				writeOutput("\r\n");
+				writeTextOutput(noteBuffer);
 			} else {
-				writeOutput(",");
+				writeCSVOutput(noteBuffer);
 			}
 		} else {
 			// Print an empty cell for CSV
 			if (!oText) {
-				writeOutput(",");
+				writeCSVOutput("");
 			}
 		}
-	}
-
-	if (oText) {
-		writeOutput("\r\n" + octavesUsed + " octaves with " + numBellsUsed + " bells used ranging from " + noteName(minPitch, g_pitch[minPitch].enharmonic[0]) + " to " + noteName(maxPitch, g_pitch[maxPitch].enharmonic[0]) + " with " + numAccidentalsUsed + " accidentals.\r\n");
 	}
 
 	endOutput();
@@ -596,8 +649,9 @@ function scoreBUC() {
 	}
 
 	// Returns true if tpc represents a sharp or double sharp.
+
 	function isSharp(tpc) {
-		return tpc > 19;	
+		return tpc > 19;
 	}
 
 	// Returns true if tpc represents a flat or double flat.
@@ -619,7 +673,7 @@ function scoreBUC() {
 
 	}
 
-	// Walks the Treble clef and passes our current position to function fnc.
+	// Walks the Treble clef and passes the current position to function fnc.
 
 	function walkTreble(fnc) {
 		var x;
@@ -629,7 +683,7 @@ function scoreBUC() {
 		}
 	}
 
-	// Walks the Bass clef and passes our current position to function fnc.
+	// Walks the Bass clef and passes the current position to function fnc.
 
 	function walkBass(fnc) {
 		var x;
@@ -841,10 +895,11 @@ function getSetting(key, fallback) {
 }
 
 // Cleans the current Score title of " - Bells Used"
+
 function cleanCurScoreTitle() {
 	var titleLength;
-	
-	if (isBellsUsed()) { 
+
+	if (isBellsUsed()) {
 		titleLength = curScore.title.length;
 		return curScore.title.substring(0, titleLength - 13);
 	} else {
@@ -853,22 +908,22 @@ function cleanCurScoreTitle() {
 }
 
 // Returns True/False if the current score title contains "Bells Used"
-function isBellsUsed(){
+
+function isBellsUsed() {
 	var titleLength;
-	
+
 	titleLength = curScore.title.length;
-	
+
 	if (titleLength < 13) {
 		return false;
 	}
-	
+
 	if (curScore.title.substring(titleLength - 13) === " - Bells Used") {
 		return true;
-	} else { 
+	} else {
 		return false;
 	}
 }
-
 
 // Returns the primary enharmonic given a pitch. 
 // Primary Enharmonic is the Natural or Sharp representation of a note
