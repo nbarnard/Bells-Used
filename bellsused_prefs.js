@@ -54,7 +54,8 @@ function showPreferences() {
 
 function checkBlankInstrumentModal() {
 	if (g_UIPrefs.checkBlankInstrument.checked) {
-		QMessageBox.information(g_UIMessage, "Instrument Must be Installed", "Before using this feature please install the instrument as described at <a href=\"http://www.inmff.net/bleh/\">http://www.inmff.net/bleh/</a>");
+		QMessageBox.information(g_UIMessage, "Instrument Must be Installed", "Before using this feature please install the instrument as described at <a href=\"http://nbarnard.github.com/Bells-Used/#blankname\">http://nbarnard.github.com/Bells-Used/#blankname</a>");
+		
 	}
 }
 
