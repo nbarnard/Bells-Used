@@ -85,7 +85,7 @@ function processUIOptions() {
 	}
 
 	// Gather the Used Pitches
-	if (isBellsUsed) {
+	if (isBellsUsed()) {
 		// Process as bells used, and see if we made any adjustments.
 		adjBellsUsed = populatePitches(true);
 
