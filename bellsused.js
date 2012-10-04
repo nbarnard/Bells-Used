@@ -517,12 +517,12 @@ function scoreBUC() {
 	var processPitch = function(pitch, writeSplitFlats) {
 		var x, numEnharmonics;
 
-		numEnharmonics = g_pitch[pitch].enharmonic.length;
-
 		// if the pitch isn't used do nothing.
 		if (!g_pitch[pitch].used) {
 			return;
 		}
+
+		numEnharmonics = g_pitch[pitch].enharmonic.length;
 
 		// Sort the enharmonics from greatest to least
 		// Which is the pitch represented as the representation of the lowest note first.
@@ -546,7 +546,7 @@ function scoreBUC() {
 			note = new Note();
 			note.pitch = pitch;
 			note.tpc = g_pitch[pitch].enharmonic[x];
-
+			
 			// Print the right notehead type if there is another enharmonic representing this pitch.
 			// Print an X note head if this isn't the most primary representation of an enharmonic
 			if (notPrimary(note.tpc) && numEnharmonics !== 1 && (numEnharmonics === 3 || notTertiary(note.tpc))) {
@@ -562,7 +562,7 @@ function scoreBUC() {
 
 			addNote(note);
 
-			lastNote.pitch = pitch;
+			lastNote.pitch = note.pitch;
 			lastNote.tpc = note.tpc;
 
 			cursor.next();
@@ -734,7 +734,7 @@ function scoreBUC() {
 	// Find the number of notes in each clef
 	bassLen = notesInBass();
 	trebleLen = notesInTreble();
-
+	
 	// Assign measure length to the larger between the notes in the Bass or treble clef.
 	measureLen = Math.max(bassLen, trebleLen);
 
@@ -793,10 +793,8 @@ function scoreBUC() {
 	cursor.voice = 0;
 	cursor.rewind();
 
-	if (lastNote.tpc !== lastTPC(lastNote.pitch)) {
-		processPitch(lastNote.pitch, true);
-	}
-
+	// Print the flats on clefSplit.
+	processPitch(clefSplit, true);
 
 	walkTreble(function(x) {
 		processPitch(x, false);
