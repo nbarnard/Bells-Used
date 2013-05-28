@@ -315,7 +315,7 @@ function textBUC() {
 
 		if (typeof text === 'string') {
 			// Remove any linefeeds
-			cell = text.replace("\n", " ");
+			cell = text.replace(/(\r\n|\n|\r)/gm, " ");
 		} else {
 			cell = text;
 		}
@@ -458,6 +458,10 @@ function textBUC() {
 				writeCSVOutput("");
 			}
 		}
+	}
+	
+	if(!oText) {
+		writeOutput("\r\n");
 	}
 
 	endOutput();
