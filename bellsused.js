@@ -152,10 +152,13 @@ function populatePitches(sourceIsBellsUsed) {
 						pitch = note.pitch;
 						tpc = note.tpc;
 
+
+
 						// If check to see if the source probably is a BellsUsed Chart and
 						// we've had two notes of the same pitch/tpc in a row.
 						// If so we've ran into a flat that represents a natural (Re: Issue #6)
-						if (sourceIsBellsUsed && lastNote.pitch === pitch && lastNote.tpc === tpc) {
+						// Also make sure the note is visible before adjusting for the next pitch (Re: Issue #17)
+						if (sourceIsBellsUsed && note.visible && lastNote.pitch === pitch && lastNote.tpc === tpc) {
 							bellsUsedAdjust = true;
 							// We actually want the next pitch.
 							pitch++;
