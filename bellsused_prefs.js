@@ -86,7 +86,7 @@ function displayStaticDefaults() {
 }
 
 function processStaticDefaults() {
-	// If we've successfully come back and set static defaults dont' cache last used options
+	// If we've successfully come back and set static defaults don't cache last used options
 	g_UIPrefs.checkCacheSettings.checked = false;
 	saveUIOptionsSettings();
 }
@@ -147,7 +147,7 @@ function changedRadio() {
 
 }
 
-// Were passing through this because QT on Windows stores true/false as strings. sigh.
+// We're passing through this function because QT on Windows stores true/false as strings. sigh.
 
 function getSetting(key, fallback) {
 	var temp;

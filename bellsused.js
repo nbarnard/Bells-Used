@@ -226,7 +226,7 @@ function textBUC() {
 		}
 
 		// find and assign the proper accidental		
-		accidental = enharmonic < 6 ? 0 : enharmonic < 13 ? 1 : enharmonic < 20 ? 2 : enharmonic < 27 ? 3 : 4;
+		accidental = Math.floor ((enharmonic + 1) / 7); 
 
 		// the enharmonics nicely line up with note names for mod 7
 		return (notes[enharmonic % 7] + accsymbols[accidental] + findOctave(pitch));
@@ -270,16 +270,28 @@ function textBUC() {
 		return Math.floor(pitch / 12);
 	}
 
-	// Returns the handbell octave associated with the low note (e.g. is this note in a 2, 3, 4, 5, 6, or 7 octave set?
+	// Returns the handbell octave associated with the low note (e.g. is this note in a 2, 3, 4, 5, 6, or 7, 8 octave set? (Who buys 9s? Its not as if anyone can actually hear those notes.)
 
 	function highOctaveNumber(pitch) {
-		return pitch > 108 ? 8 : pitch > 103 ? 7 : pitch > 96 ? 6 : pitch > 91 ? 5 : pitch > 84 ? 4 : pitch > 79 ? 3 : 2;
+		return pitch > 108 ? 8 : 
+		       pitch > 103 ? 7 : 
+		       pitch > 96 ? 6 : 
+		       pitch > 91 ? 5 : 
+		       pitch > 84 ? 4 : 
+		       pitch > 79 ? 3 : 
+		       				2;
 	}
 
 	// Returns the handbell octave associated with the low note (e.g. is this note in a 2, 3, 4, 5, 6, or 7 octave set?
 
 	function lowOctaveNumber(pitch) {
-		return pitch < 24 ? 8 : pitch < 31 ? 7 : pitch < 36 ? 6 : pitch < 43 ? 5 : pitch < 48 ? 4 : pitch < 55 ? 3 : 2;
+		return pitch < 24 ? 8 : 
+			   pitch < 31 ? 7 : 
+			   pitch < 36 ? 6 : 
+			   pitch < 43 ? 5 : 
+			   pitch < 48 ? 4 : 
+			   pitch < 55 ? 3 : 
+							2;
 	}
 
 	// Sorts enharmonics from most preferred to least preferred.
@@ -754,7 +766,7 @@ function scoreBUC() {
 	score.title = title + " - Bells Used";
 	score.composer = composer;
 
-	// Make a measure of the appropriate length, so there are no barlines in the BUC.
+	// Make a the time signature of the measure the appropriate length, so there are no barlines in the BUC.
 	score.timesig = new TimeSig(measureLen, 4);
 	// Be explicit: we want C Major/A Minor (0 flats/sharps) in key sig.
 	score.keysig = 0;
@@ -880,7 +892,7 @@ function changedRadio() {
 
 }
 
-// Were passing through this because QT on Windows stores true/false as strings. sigh.
+// We're passing through this because QT on Windows stores true/false as strings. sigh.
 
 function getSetting(key, fallback) {
 	var temp;
@@ -939,7 +951,6 @@ function primaryEnharmonicRep(pitch) {
 
 	return EnharmonicOrder[pitch % 12];
 }
-
 
 // See if an array contains an object from http://stackoverflow.com/questions/237104/array-containsobj-in-javascript
 

@@ -189,7 +189,6 @@ function populatePitches(sourceIsBellsUsed) {
 	return bellsUsedAdjust;
 }
 
-
 // Generates Text Based BUCs
 
 function textBUC() {
@@ -206,8 +205,8 @@ function textBUC() {
 		}
 
 		// find and assign the proper accidental		
-		accidental = enharmonic < 6 ? 0 : enharmonic < 13 ? 1 : enharmonic < 20 ? 2 : enharmonic < 27 ? 3 : 4;
-
+		accidental = Math.floor ((enharmonic + 1) / 7); 
+		
 		// the enharmonics nicely line up with note names for mod 7
 		return (notes[enharmonic % 7] + accsymbols[accidental] + findOctave(pitch));
 
@@ -432,9 +431,9 @@ function textBUC() {
 		}
 	}
 
-	// Iterate through all the notes from the bottom to the top printing out the ones that are used.
+	// Iterate through all the notes from the bottom to the top printing out the ones that are not used.
 	for (idx = startPitch; idx < endPitch; idx++) {
-		// Check if note is process the note  as used/unused
+		// Check if note is process the note as used/unused
 		if (!g_pitch[idx].used) {
 			// Find the proper octave
 			octave = findOctave(idx);
@@ -617,7 +616,7 @@ function scoreBUC() {
 		score.poet = "Octaves Used: " + octavesUsed + " (Lowest Octave Used: " + lowOctave + " Highest Octave Used: " + highOctave + ")";
 	}
 
-	// Make a measure of the appropriate length, so there are no barlines in the BUC.
+	// Make a the time signature of the measure the appropriate length, so there are no barlines in the BUC.
 	score.timesig = new TimeSig(measureLen, 4);
 	// Be explicit: we want C Major/A Minor (0 flats/sharps) in key sig.
 	score.keysig = 0;
@@ -694,29 +693,52 @@ function findLowPitch() {
 	return x;
 }
 
+// Returns the handbell octave associated with the low note (e.g. is this note in a 2, 3, 4, 5, 6, or 7, 8 octave set? (Who buys 9s? Its not as if anyone can actually hear those notes.)
+
+	function highOctaveNumber(pitch) {
+		return pitch > 108 ? 8 : 
+		       pitch > 103 ? 7 : 
+		       pitch > 96 ? 6 : 
+		       pitch > 91 ? 5 : 
+		       pitch > 84 ? 4 : 
+		       pitch > 79 ? 3 : 
+		       				2;
+	}
 
 // Returns the handbell octave associated with the low note (e.g. is this note in a 2, 3, 4, 5, 6, or 7 octave set?
 
-function highOctaveNumber(pitch) {
-	return pitch > 108 ? 8 : pitch > 103 ? 7 : pitch > 96 ? 6 : pitch > 91 ? 5 : pitch > 84 ? 4 : pitch > 79 ? 3 : 2;
-}
+	function lowOctaveNumber(pitch) {
+		return pitch < 24 ? 8 : 
+			   pitch < 31 ? 7 : 
+			   pitch < 36 ? 6 : 
+			   pitch < 43 ? 5 : 
+			   pitch < 48 ? 4 : 
+			   pitch < 55 ? 3 : 
+							2;
+	}
 
-// Returns the handbell octave associated with the low note (e.g. is this note in a 2, 3, 4, 5, 6, or 7 octave set?
-
-function lowOctaveNumber(pitch) {
-	return pitch < 24 ? 8 : pitch < 31 ? 7 : pitch < 36 ? 6 : pitch < 43 ? 5 : pitch < 48 ? 4 : pitch < 55 ? 3 : 2;
-}
 
 // Returns the ending of the octave on the high side. We're using handbell octaves so we break on Cs and Gs.
 
 function highOctaveEnd(pitch) {
-	return pitch > 103 ? 108 : pitch > 96 ? 103 : pitch > 91 ? 96 : pitch > 84 ? 91 : pitch > 79 ? 84 : 79;
+	return pitch > 103 ? 108 : 
+	       pitch > 96 ? 103 : 
+	       pitch > 91 ? 96 : 
+	       pitch > 84 ? 91 : 
+	       pitch > 79 ? 84 : 
+	                    79;
 }
 
 // Returns the beginning of the octave on the low side. We're using handbell octaves so we break on Cs and Gs.
 
 function lowOctaveBegin(pitch) {
-	return pitch < 24 ? 17 : pitch < 31 ? 24 : pitch < 36 ? 31 : pitch < 43 ? 36 : pitch < 48 ? 43 : pitch < 55 ? 48 : 55;
+	return pitch < 24 ? 17 : 
+	       pitch < 31 ? 24 : 
+	       pitch < 36 ? 31 : 
+	       pitch < 43 ? 36 : 
+	       pitch < 48 ? 43 : 
+	       pitch < 55 ? 48 : 
+	                    55;
 }
 
 
